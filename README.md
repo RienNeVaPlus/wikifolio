@@ -85,7 +85,7 @@ console.log(await wikifolio.price());
 
 ```ts
 const wikifolio = wiki.wikifolio('wfobserver');
-console.log(await wikifolio.trades({pageSize:100, page:1));
+console.log(await wikifolio.trades({pageSize:100, page:1}));
 ```
 
 ![divider](./assets/divider.small.png)
