@@ -104,7 +104,7 @@ console.log(results);
 ```ts
 const watchlist = await wiki.watchlist();
 for(const wikifolio of watchlist){
-    await wikifolio.watch(false);
+    await wikifolio.watchlist(false);
 }
 ```
 
