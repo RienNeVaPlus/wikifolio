@@ -81,7 +81,16 @@ console.log(await wikifolio.price());
 
 ![divider](./assets/divider.small.png)
 
-#### 3. Fetch portfolio items of a wikifolio
+#### 3. Fetch wikifolio trades
+
+```ts
+const wikifolio = wiki.wikifolio('wfobserver');
+console.log(await wikifolio.trades({pageSize:100, page:1));
+```
+
+![divider](./assets/divider.small.png)
+
+#### 4. Fetch portfolio items of a wikifolio
 
 ```ts
 const wikifolio = wiki.wikifolio('wfobserver');
@@ -90,7 +99,7 @@ console.log(await wikifolio.portfolio());
 
 ![divider](./assets/divider.small.png)
 
-#### 4. Search wikifolios
+#### 5. Search wikifolios
 
 ```ts
 const results = await wiki.search({query: 'Supervisor'});
@@ -99,7 +108,7 @@ console.log(results);
 
 ![divider](./assets/divider.small.png)
 
-#### 5. Unwatch all wikifolios on the watchlist
+#### 6. Unwatch all wikifolios on the watchlist
 
 ```ts
 const watchlist = await wiki.watchlist();
