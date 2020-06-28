@@ -1,0 +1,31 @@
+{
+  "name": "wikifolio",
+  "version": "0.0.1",
+  "description": "Wikifolio (unofficial) API",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "jsnext:main": "src/index.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RienNeVaPlus/wikifolio.git"
+  },
+  "author": "RienNeVaPlus <?@rienneva.plus>",
+  "license": "MIT",
+  "scripts": {
+	  "start": "tsc -w",
+	  "build": "rm -rf ./dist && tsc",
+	  "prepublishOnly": "rm -rf ./dist && tsc"
+  },
+  "ntl": {
+    "runner": "yarn"
+  },
+  "dependencies": {
+    "jsdom": "^16.2.2",
+    "request-promise-native": "^1.0.8"
+  },
+  "devDependencies": {
+    "@types/jsdom": "^16.2.3",
+    "@types/request-promise-native": "^1.0.17",
+    "typescript": "^3.9.5"
+  }
+}
