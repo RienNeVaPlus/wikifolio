@@ -3,10 +3,10 @@
 </h1>
 
 <p align="center">
-    <a href="https://github.com/RienNeVaPlus/type-arango/commits/master"><img src="https://img.shields.io/github/last-commit/riennevaplus/wikifolio.svg" /></a>
+    <a href="https://github.com/RienNeVaPlus/wikifolio/commits/master"><img src="https://img.shields.io/github/last-commit/riennevaplus/wikifolio.svg" /></a>
     <a href="https://github.com/RienNeVaPlus/wikifolio/blob/master/package.json"><img src="https://img.shields.io/github/package-json/v/riennevaplus/wikifolio.svg" /></a>
     <a href="https://www.npmjs.com/package/wikifolio"><img src="https://img.shields.io/npm/v/wikifolio.svg" /></a>
-    <a href="https://github.com/RienNeVaPlus/wikifolio/blob/master/LICENSE"><img src="https://img.shields.io/npm/l/type-arango.svg" /></a>
+    <a href="https://github.com/RienNeVaPlus/wikifolio/blob/master/LICENSE"><img src="https://img.shields.io/npm/l/wikifolio.svg" /></a>
     <img src="https://img.shields.io/github/repo-size/RienNeVaPlus/wikifolio.svg" />
 </p>
 
@@ -65,7 +65,7 @@ const wiki = new Wikifolio({email, password});
 
 #### 1. Fetch details of a wikifolio
 
-```ts;
+```ts
 const wikifolio = wiki.wikifolio('wfobserver');
 console.log(await wikifolio.details());
 ```
@@ -81,7 +81,7 @@ console.log(await wikifolio.price());
 
 ![divider](./assets/divider.small.png)
 
-#### 3. Fetch wikifolio portfolio items
+#### 3. Fetch portfolio items of a wikifolio
 
 ```ts
 const wikifolio = wiki.wikifolio('wfobserver');
