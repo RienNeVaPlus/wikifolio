@@ -16,7 +16,7 @@ This is an <strong>unofficial</strong> Node.js API client for <a href="https://w
 
 <p align="center">
     <sub>
-        :warning: <strong>Wikifolio could change their API at any moment.</strong> :warning:
+        ⚠️ <strong>Wikifolio could change their API at any moment.</strong> ⚠️
         <br/>
         If anything is broken, please <a href="https://github.com/RienNeVaPlus/wikifolio/issues/new/choose">open an issue</a>.
      </sub>
@@ -43,7 +43,7 @@ This is an <strong>unofficial</strong> Node.js API client for <a href="https://w
 
 ```bash
 # using npm
-npm install --save wikifolio
+npm i wikifolio
 
 # using yarn
 yarn add wikifolio
@@ -102,8 +102,8 @@ console.log(await wikifolio.portfolio());
 #### 5. Search wikifolios
 
 ```ts
-const results = await wiki.search({query: 'Supervisor'});
-console.log(results);
+const wikifolios = await wiki.search({query: 'Supervisor'});
+console.log(wikifolios);
 ```
 
 ![divider](./assets/divider.small.png)
@@ -121,6 +121,8 @@ for(const wikifolio of watchlist){
 
 ### 👷 Todos
 - Implement trading features for owned wikifolios
+- Implement trader profiles
+- Implement wikifolio sustanability
 
 ![divider](./assets/divider.png)
 
