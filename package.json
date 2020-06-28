@@ -1,6 +1,6 @@
 {
   "name": "wikifolio",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Wikifolio (unofficial) API",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -8,6 +8,9 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/RienNeVaPlus/wikifolio.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
   },
   "author": "RienNeVaPlus <?@rienneva.plus>",
   "license": "MIT",
