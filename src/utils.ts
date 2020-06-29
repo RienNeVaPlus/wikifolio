@@ -1,6 +1,8 @@
 import {JSDOM} from 'jsdom'
 import * as requestPromise from 'request-promise-native'
 
+const emptyValues = ['', '-', 'N/A'];
+
 export function parseHtml(html: string){
 	const {window} = new JSDOM(html);
 	const {document} = window;
@@ -28,7 +30,9 @@ function get(document: Document, type: ValueType = 'string', selector: string){
 	return toType(text, type);
 }
 
-function formatNumber(string: string){ return string.replace(/\./g, '').replace(',', '.'); }
+function formatNumber(string: string){
+	return String(string).replace(/\./g, '').replace(',', '.');
+}
 
 export function toType(val: any, type: ValueType){
 	switch(type){
@@ -42,13 +46,13 @@ export function toType(val: any, type: ValueType){
 }
 
 export function toDate(val: string){
-	if(!val || val === '-') return;
+	if(val === undefined || emptyValues.includes(val)) return undefined;
 	const p = val.split('.');
 	return new Date(parseInt(p[2]), parseInt(p[1])-1, parseInt(p[0]), 1);
 }
 
 export function toFloat(val: string){
-	if(val === undefined || ['', '-', 'N/A'].includes(val)) return undefined;
+	if(val === undefined || emptyValues.includes(val)) return undefined;
 	return parseFloat(formatNumber(val));
 }
 
@@ -57,6 +61,7 @@ export function toInt(val: string){
 }
 
 export function toCurrency(val: string){
+	if(val === undefined || emptyValues.includes(val)) return undefined;
 	return parseFloat(formatNumber(val.startsWith('EUR ') ? val.substr(4) : val));
 }
 
@@ -72,6 +77,12 @@ export function toQueryString(obj?: any, prefix: string | false = '?', encodeKey
 export function removeValues(obj: any, ...values: any[]){
 	Object.keys(obj).forEach(key => ((!values.length && obj[key] === undefined) || values.includes(obj[key])) && delete obj[key]);
 	return obj;
+}
+
+export function matchResult(regexp: RegExp, string: string, emptyValue: any = undefined){
+	let res = regexp.exec(string);
+	if(!res) return emptyValue;
+	return res[1];
 }
 
 export {

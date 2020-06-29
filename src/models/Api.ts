@@ -1,4 +1,4 @@
-import {Wikifolio, WikifolioSearch, WikifolioIdentifier} from '.'
+import {Wikifolio, WikifolioSearch, WikifolioIdentifier, User} from '.'
 import {JSDOM, requestPromise} from '../utils'
 
 const jar = requestPromise.jar();
@@ -104,21 +104,20 @@ export class Api {
 	}
 
 	public wikifolio(idOrSymbol: WikifolioIdentifier | string): Wikifolio {
-		return Wikifolio.instance(idOrSymbol, this);
+		return Wikifolio.instance(this, idOrSymbol);
 	}
 
 	public search(search: Partial<WikifolioSearch>): Promise<Wikifolio[]> {
-		return Wikifolio.search(search, this);
+		return Wikifolio.search(this, search);
 	}
 
 	public watchlist(){
 		return Wikifolio.watchlist(this);
 	}
 
-	public profile(_id: string){
-		console.error('Not yet implemented');
+	public user(nickname: string){
+		return User.instance(this, nickname);
 	}
-
 }
 
 export default Api;

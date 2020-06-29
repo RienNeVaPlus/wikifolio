@@ -25,7 +25,7 @@ This is an <strong>unofficial</strong> Node.js API client for <a href="https://w
 ![divider](./assets/divider.png)
 
 ### ⭐ Features
-- **User management**
+- **Session management**
 - **Search wikifolios**
 - Fetch wikifolio **details** / **analysis** / **price**
 - Fetch **portfolio items**
@@ -117,11 +117,29 @@ for(const wikifolio of watchlist){
 }
 ```
 
+![divider](./assets/divider.small.png)
+
+#### 7. Get trader info
+
+```ts
+const user = await wiki.user('riennevaplus');
+console.log(await user.details()); 
+```
+
+![divider](./assets/divider.small.png)
+
+#### 8. Get wikifolios of a trader
+
+```ts
+const user = await wiki.user('riennevaplus');
+console.log(await user.wikifolios()); 
+```
+
 ![divider](./assets/divider.png)
 
 ### 👷 Todos
-- Implement trading features for owned wikifolios
-- Implement trader profiles
+- Improve documentation
+- Implement trading features for own wikifolios
 - Implement wikifolio sustanability
 
 ![divider](./assets/divider.png)

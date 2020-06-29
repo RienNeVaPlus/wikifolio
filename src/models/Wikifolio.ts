@@ -1,5 +1,5 @@
-import {parseHtml, removeValues, toCurrency, toDate, toFloat, toInt, toQueryString} from '../utils'
-import {Api, Trade, Portfolio} from '.'
+import {matchResult, parseHtml, removeValues, toCurrency, toDate, toFloat, toInt, toQueryString} from '../utils'
+import {Api, Portfolio, Trade, User} from '.'
 
 export interface WikifolioIdentifier {
 	id?: string;
@@ -84,12 +84,13 @@ interface WikifolioComment {
 }
 
 const regex = {
-	script: new RegExp('<script type="text\/json">(.*)<\/script>', 'g')
+	script: /<script type="text\/json">(.*)<\/script>/g,
+	wikifolioData: /wikifolio\.data = ({[^}]*})/g,
 };
 
 export class Wikifolio {
 	private static instances: {[key: string]: Wikifolio} = {};
-	public static instance(identifier: WikifolioIdentifier | string, api: Api): Wikifolio {
+	public static instance(api: Api, identifier: WikifolioIdentifier | string): Wikifolio {
 		const id = typeof identifier === 'string' ? Wikifolio.parseIdentifier(identifier) : identifier;
 		const hash = JSON.stringify(id);
 		return this.instances[hash] = this.instances[hash]
@@ -110,7 +111,7 @@ export class Wikifolio {
 	/**
 	 * Returns a list of found Wikifolio[]
 	 */
-	public static async search(param: Partial<WikifolioSearch> = {}, api: Api): Promise<Wikifolio[]> {
+	public static async search(api: Api, param: Partial<WikifolioSearch> = {}): Promise<Wikifolio[]> {
 		const html = await api.request(`dynamic/${api.opt.locale.join('/')}/wikifoliosearch/search${toQueryString({
 			_: + new Date(),
 			tags: ['aktde','akteur','aktusa','akthot','aktint','etf','fonds','anlagezert','hebel'],
@@ -139,15 +140,16 @@ export class Wikifolio {
 			let wiki: Wikifolio = new Wikifolio(wikifolioFullName, api);
 			const capital = rankingValues.find(i => i.label === 'Investiertes Kapital');
 			const user = editor.name.split(' | ');
-			Object.assign(wiki, <Wikifolio>{
+			wiki.set({
 				capital: capital ? toCurrency(capital.displayValue) : 0,
 				rank: toFloat(mainRankingValue.displayValue),
 				tags: tags.map(t => t.text),
 				id: wikifolioId,
 				isin: wikifolioIsin || undefined,
-				userId: user[1],
-				userName: user[0],
-				userProfileUrl: Api.url + editor.url.substr(1),
+				user: User.instance(api, user[1]).set({
+					name:user[0],
+					profileUrl:Api.url + editor.url.substr(1)
+				}),
 				createdAt: toDate(rankingValues.find(i => i.label === 'Erstellungsdatum').displayValue),
 				publishedAt: toDate(rankingValues.find(i => i.label === 'Erstemission').displayValue),
 				fee: toInt(rankingValues.find(i => i.label === 'Performancegebühr').displayValue),
@@ -191,15 +193,16 @@ export class Wikifolio {
 			} = item;
 
 			const symbol = wikifolioUrl.split('/').slice(-1)[0];
-			let wiki: Wikifolio = new Wikifolio({symbol, id}, api);
+			let wikifolio: Wikifolio = new Wikifolio({symbol, id}, api);
 			const user = editor.name.split(' | ');
 
-			Object.assign(wiki, removeValues(<Partial<Wikifolio>>{
+			wikifolio.set({
 				isin,
 				title,
-				userId: user[1],
-				userName: user[0],
-				userProfileUrl: Api.url + editor.url.substr(1),
+				user: User.instance(api, user[1]).set({
+					name: user[0],
+					profileUrl: Api.url + editor.url.substr(1)
+				}),
 				isNotificationSet,
 				fee: toInt(rankingValues.find(i => i.label === 'Performancegebühr').displayValue),
 				publishedAt: toDate(rankingValues.find(i => i.label === 'Erstemission').displayValue),
@@ -228,22 +231,24 @@ export class Wikifolio {
 				chartImgUrl,
 				wikifolioUrl: Api.url + wikifolioUrl.substr(1),
 				status: status
-			}));
-			wikis.push(wiki);
+			});
+			wikis.push(wikifolio);
 		}
 
 		return wikis;
 	}
 
 	constructor(identifiers: WikifolioIdentifier, private api: Api){
-		Object.assign(this, identifiers);
+		this.set(identifiers);
 	}
 
-	sources: string[] = [];
+	public set(wikifolio: Partial<Wikifolio>){
+		return Object.assign(this, removeValues(wikifolio));
+	}
 
-	userId?: string;
-	userName?: string;
-	userProfileUrl?: string;
+	sources = new Set<string>();
+
+	user?: User;
 
 	id?: string;
 	symbol?: string;
@@ -269,16 +274,16 @@ export class Wikifolio {
 	decisionMaking?: string[];
 
 	chartImgUrl?: string;
-	// key?: string;
 	investable?: boolean;
 	containsLeverageProducts?: boolean;
 	realMoney?: boolean;
 	isWatchlisted?: boolean;
 	name?: string;
 	isOwned?: boolean;
-	// perf?: Partial<Performance>;
+
 	rank?: number; // Top-Wikifolio-Rangliste
-	isSuper?: boolean; // Dachwikifolio
+	isSuper?: boolean; // isSuperWikifolio
+	isChallenge?: boolean; // isChallengeWikifolio
 	sharperatio?: number;
 
 	perf12m?: number;
@@ -325,6 +330,9 @@ export class Wikifolio {
 
 	comments?: WikifolioComment[];
 
+	// user wikifolios
+	category?: string;
+
 	/**
 	 * Fetch specific attributes
 	 */
@@ -348,72 +356,87 @@ export class Wikifolio {
 	 * Fetch basic data, mainly required for obtaining the ID when only a symbol is provided
 	 */
 	public async basics(ignoreCache: boolean = false): Promise<this> {
-		if(this.sources.includes('basics') && !ignoreCache) return this;
+		if(this.sources.has('basics') && !ignoreCache) return this;
 		await this.fetch('symbol');
 
 		const {id, title, traderNickname, performanceEver, performanceToday} =
 			await this.api.request(`api/wikifolio/${this.symbol}/basicdata`);
 
-		this.sources.push('basics');
+		this.sources.add('basics');
 
-		return Object.assign(this, removeValues(<Partial<Wikifolio>>{
+		return this.set({
 			id, title,
-			userId: traderNickname,
+			user: User.instance(this.api, traderNickname),
 			perfever: toFloat(performanceEver.displayValue),
 			perftoday: toFloat(performanceToday.displayValue)
-		}));
+		});
 	}
 
 	/**
 	 * Fetches Wikifolio details from HTML (slow)
 	 */
 	public async details(ignoreCache: boolean = false): Promise<this> {
-		if(this.sources.includes('details') && !ignoreCache) return this;
-		this.fetch('symbol');
+		if(this.sources.has('details') && !ignoreCache) return this;
+		await this.fetch('symbol');
 
 		const wikifolioUrl = `${this.api.opt.locale.join('/')}/w/${this.symbol}`;
-		const {$, $$, attribute, string, int, float, date, currency} = parseHtml(
+		const {$, $$, attribute, string, float, date, currency} = parseHtml(
 			await this.api.request(wikifolioUrl)
 		);
 
-		console.log('WTF', wikifolioUrl);
-		const scripts = $$('body script');//.innerHTML.match(/wikifolio.data = ({.*)\;/g);
-		const script = scripts[scripts.length-1];
+		// on page js
+		const {
+			wikifolioId, userId, userOwnsWikifolio, isSuperWikifolio, isChallengeWikifolio, containsLeverageProducts
+		} = eval(`(${regex.wikifolioData.exec($$('body script').slice(-1)[0].innerHTML)![1]})`);
 
-		console.log('SCRIPT', script.innerHTML);
-		Object.assign(this, removeValues(<Partial<Wikifolio>>{
-			id: $('[data-wikifolioid]').dataset.wikifolioid,
+		// the table contains no identifiers and changes depending on the wikifolio state -.-
+		const table = $('table.c-certificate__key-table').innerHTML;
+		const publishedAt = toDate(matchResult(/Erstemission<\/td>\s[^>]+>\s.+([0-9.]{10})/, table));
+		const fee = parseInt(matchResult(/Performancegebühr<\/td>\s[^>]+>\s[ ]+([^ ]+)/, table));
+		const liquidation = toFloat(matchResult(/Liquidationskennzahl<\/td>\s[^>]+>\s[ ]+([^ ]+)/, table));
+		const tradingVolume = toCurrency(matchResult(/Handelsvolumen<\/td>\s.+\s.+\s[ ]+([^ ]+)/, table));
+
+		const nickname = string('.c-trader__name:nth-child(2)');
+		const user = User.instance(this.api, nickname);
+		user.set({
+			id: userId,
+			name: string('.c-trader__name:nth-child(2)'),
+			profileUrl: Api.url + attribute('.gtm-profile-link', 'href').substr(1)
+		});
+
+		this.set({
+			user,
+			id: wikifolioId,
 			wikifolioUrl: Api.url + wikifolioUrl.substr(1),
 			isin: string('.gtm-copy-isin'),
 			title: string('.c-wf-head__title-text'),
-			userId: string('.c-trader__name:nth-child(2)'),
-			userName: string('.c-trader__name:nth-child(1)'),
-			userUrl: Api.url + attribute('.gtm-profile-link', 'href').substr(1),
+			isOwned: userOwnsWikifolio,
 			capital: currency('.c-certificate__item--capital .c-certificate__item-value'),
-			// MASTER DATA section
 			createdAt: date('.c-masterdata__item:nth-child(2) .c-masterdata__item-value'),
-			publishedAt: date('.c-certificate__key:nth-child(1) .c-certificate__key-value'),
 
-			fee: int('.c-certificate__key:nth-child(3) .c-certificate__key-value'),
-			liquidation: float('.c-certificate__key:nth-child(4) .c-certificate__key-value'),
-			tradingVolume: currency('.c-certificate__key:nth-child(5) .c-certificate__key-value'),
+			publishedAt,
+			fee,
+			liquidation,
+			tradingVolume,
 
 			indexLevel: float('.c-masterdata__item:nth-child(3) .c-masterdata__item-value'),
 			highWatermark: float('.c-masterdata__item:nth-child(4) .c-masterdata__item-value'),
 
-			perfever: float('.c-ranking-box--large .c-ranking-item:nth-child(1)'),
-			perf12m: float('.c-ranking-box--large .c-ranking-item:nth-child(2)'),
-			perfannually: float('.c-ranking-box--large .c-ranking-item:nth-child(3)'),
+			perfever: float('.c-ranking-box--large .c-ranking-item:nth-child(1) .c-ranking-item__value'),
+			perf12m: float('.c-ranking-box--large .c-ranking-item:nth-child(2) .c-ranking-item__value'),
+			perfannually: float('.c-ranking-box--large .c-ranking-item:nth-child(3) .c-ranking-item__value'),
 			maxdraw: float('.c-ranking-box--small .c-ranking-item__value'),
 			risk: float('.c-risk-factor'),
 
+			isSuper: isSuperWikifolio,
+			isChallenge: isChallengeWikifolio,
 			isWatchlisted: !!$('.js-remove-from-watchlist'),
-			containsLeverageProducts: !!$('.c-status-icon-wrapper[title*="Hebelprodukte"]'),
+			containsLeverageProducts,
 			investable: !!$('.c-status-icon-wrapper[title*="Investierbar"]'),
 			realMoney: !!$('.c-status-icon-wrapper[title*="Real Money"]'),
 
 			tradeidea: string('.js-tradeidea__content'),
-			decisionMaking: $$('.c-wfdecision__item').map(e => e.textContent),
+			decisionMaking: $$('.c-wfdecision__item').map(e => e.textContent!),
 
 			comments: $$('.c-wfcomment article').map(e => {
 				const body = e.querySelector('.c-wfcomment__item-content p')!;
@@ -428,9 +451,9 @@ export class Wikifolio {
 					createdAt: new Date(d[2], d[1]-1, d[0], d[4]+2, d[5])
 				})
 			})
-		}));
+		});
 
-		this.sources.push('details');
+		this.sources.add('details');
 
 		return this;
 	}
@@ -439,7 +462,7 @@ export class Wikifolio {
 	 * Fetch wikifolio price
 	 */
 	public async price(ignoreCache: boolean = false): Promise<this> {
-		if(this.sources.includes('price') && !ignoreCache) return this;
+		if(this.sources.has('price') && !ignoreCache) return this;
 		await this.fetch('id');
 
 		const {
@@ -447,14 +470,13 @@ export class Wikifolio {
 			showMidPrice, currency, isCurrencyConverted, isTicking
 		} = await this.api.request(`api/wikifolio/${this.id}/price`);
 
-		Object.assign(this, <Partial<Wikifolio>>{
-			hasPrice: true,
+		this.set({
 			ask, bid, quantityLimitBid, quantityLimitAsk, midPrice, showMidPrice, currency, isCurrencyConverted, isTicking,
 			priceCalculatedAt: new Date(calculationDate),
 			priceValidUntil: new Date(validUntilDate)
 		});
 
-		this.sources.push('price');
+		this.sources.add('price');
 
 		return this;
 	}
@@ -481,7 +503,7 @@ export class Wikifolio {
 	 * Loads performance information
 	 */
 	public async analysis({ignoreCache, ...param}: Partial<WikifolioAnalysisParam> = {}): Promise<this> {
-		if(this.sources.includes('analysis') && !ignoreCache) return this;
+		if(this.sources.has('analysis') && !ignoreCache) return this;
 		await this.fetch('id');
 
 		const {analysis: {keyFigures: l}} = await this.api.request(
@@ -492,8 +514,7 @@ export class Wikifolio {
 			})}`
 		);
 
-		Object.assign(this, removeValues(<Partial<Wikifolio>>{
-			hasAnalysis: true,
+		this.set({
 			maxdraw: toFloat(l.find(i => i.label === 'Maximaler Verlust (bisher)').value),
 			perf52weekHigh: toFloat(l.find(i => i.label == '52-Wochen-Hoch').value),
 			sharperatio: toFloat(l.find(i => i.label === 'Sharpe Ratio').value),
@@ -506,9 +527,9 @@ export class Wikifolio {
 			perf3m: toFloat(l.find(i => i.label === 'Performance 3 Monate').value),
 			perf1m: toFloat(l.find(i => i.label === 'Performance 1 Monat').value),
 			perfintra: toFloat(l.find(i => i.label === 'Performance Intraday').value),
-		}));
+		});
 
-		this.sources.push('analysis');
+		this.sources.add('analysis');
 
 		return this;
 	}
@@ -538,12 +559,12 @@ export class Wikifolio {
 		}
 	}
 
-	/**
-	 * Fetch sustainability
-	 */
-	public async sustainability(): Promise<void> {
-		console.error('Not yet implemented');
-	}
+	// /**
+	//  * Fetch sustainability
+	//  */
+	// public async sustainability(): Promise<void> {
+	// 	console.error('Not yet implemented');
+	// }
 
 	/**
 	 * Toggle watchlist status of wikifolio

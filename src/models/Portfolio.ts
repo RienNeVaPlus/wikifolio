@@ -1,4 +1,5 @@
 import {Wikifolio, Api} from '.'
+import {removeValues} from '../utils';
 
 const groupType = {
 	0: 'Cash',
@@ -39,13 +40,16 @@ export class Portfolio {
 	currency: string;
 	totalValue: number;
 	isSuper: boolean;
-	groups: PortfolioGroup[];
+	groups: PortfolioGroup[] = [];
 
 	private static getGroupName(groupId: number): PortfolioGroupName {
 		return groupType[groupId] || 'n/a';
 	}
 
 	constructor({groups, currency, totalValue, isSuper}: Portfolio, public wikifolio: Wikifolio){
+		this.currency = currency;
+		this.totalValue = totalValue;
+		this.isSuper = isSuper;
 		this.groups = groups.map(g => ({
 			...g,
 			name: Portfolio.getGroupName(g.type),
@@ -54,9 +58,10 @@ export class Portfolio {
 				link: Api.url + i.link.substr(1)
 			}))
 		}));
-		this.currency = currency;
-		this.totalValue = totalValue;
-		this.isSuper = isSuper;
+	}
+
+	public set(portfolio: Partial<Portfolio>){
+		return Object.assign(this, removeValues(portfolio));
 	}
 
 	public get items(): PortfolioItem[] {

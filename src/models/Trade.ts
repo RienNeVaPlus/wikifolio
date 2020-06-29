@@ -1,4 +1,5 @@
 import {Api, Wikifolio} from '.'
+import {removeValues} from '../utils';
 
 type TradeOrderTypeSell = 'Sell' | 'SellLimit' | 'StopLoss' | 'SellStopLimit'
 type TradeOrderTypeBuy = 'Buy' | 'BuyLimit'
@@ -30,12 +31,16 @@ export class Trade {
 		return ['Buy', 'BuyLimit'].includes(orderType) ? 'buy' : 'sell';
 	}
 
-	constructor(data: Partial<Trade> = {}, public wikifolio: Wikifolio){
-		Object.assign(this, <Partial<Trade>>{
-			...data,
-			type: Trade.getType(data.orderType!),
-			link: Api.url + data.link!.substr(1),
-			executedAt: new Date(data.executionDate!)
+	constructor(trade: Partial<Trade> = {}, public wikifolio: Wikifolio){
+		this.set({
+			...trade,
+			type: Trade.getType(trade.orderType!),
+			link: Api.url + trade.link!.substr(1),
+			executedAt: new Date(trade.executionDate!)
 		});
+	}
+
+	public set(trade: Partial<Trade>){
+		return Object.assign(this, removeValues(trade));
 	}
 }
