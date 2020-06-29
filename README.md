@@ -28,10 +28,11 @@ This is an <strong>unofficial</strong> Node.js API client for <a href="https://w
 - **Session management**
 - **Search wikifolios**
 - Fetch wikifolio **details** / **analysis** / **price**
-- Fetch **portfolio items**
+- Fetch **portfolio positions**
 - Fetch wikifolio **trades**
 - Fetch **watchlist entries**
 - **Watch** / **unwatch** wikifolios
+- Fetch **users** & their **wikifolios**
 
 ![divider](./assets/divider.small.png)
 
@@ -85,7 +86,7 @@ console.log(await wikifolio.price());
 
 ```ts
 const wikifolio = wiki.wikifolio('wfobserver');
-console.log(await wikifolio.trades({pageSize:100, page:1}));
+console.log(await wikifolio.trades({pageSize: 100, page: 1}));
 ```
 
 ![divider](./assets/divider.small.png)
@@ -135,11 +136,48 @@ const user = wiki.user('riennevaplus');
 console.log(await user.wikifolios()); 
 ```
 
+![divider](./assets/divider.small.png)
+
+#### 9. Place a buy order
+
+There's a similar `sell()` method.
+
+```ts
+const wikifolio = wiki.wikifolio('wfobserver');
+const result = await wikifolio.buy({
+    amount: 1,
+    limitPrice: 220,
+    orderType: "limit",
+    underlyingIsin: "DE000LS9NMQ9",
+    validUntil: "2020-07-29T00:00:00.000Z"
+});
+```
+
+#### 9. Update an order
+
+```ts
+const wikifolio = wiki.wikifolio('wfobserver');
+const order = wikifolio.order('8b4da005-6750-4b4c-9dff-0364d3e07be0');
+console.log(await order.submit({limitPrice: 100}));
+```
+
+![divider](./assets/divider.small.png)
+
+#### 11. List & remove wikifolio orders
+
+```ts
+const wikifolio = wiki.wikifolio('wfobserver');
+const orders = await wikifolio.orders({pageSize: 25, page: 0});
+
+for(const order of orders){
+    console.log(await order.remove());
+}
+```
+
 ![divider](./assets/divider.png)
 
 ### 👷 Todos
 - Improve documentation
-- Implement trading features for own wikifolios
 - Implement wikifolio sustanability
 
 ![divider](./assets/divider.png)
