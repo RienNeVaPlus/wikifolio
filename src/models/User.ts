@@ -4,8 +4,7 @@ import {parseHtml, removeValues, toFloat} from '../utils';
 export class User {
 	private static instances: {[key: string]: User} = {};
 	public static instance(api: Api, nickname: string): User {
-		return this.instances[nickname] = this.instances[nickname]
-			|| new User({nickname}, api);
+		return this.instances[nickname] = this.instances[nickname] || new User({nickname}, api);
 	}
 
 	public static async xxx(){

@@ -1,5 +1,5 @@
 import {matchResult, parseHtml, removeValues, toCurrency, toDate, toFloat, toInt, toQueryString} from '../utils'
-import {Api, Portfolio, Trade, User} from '.'
+import {Api, Order, OrderParam, OrderPlaceParam, Portfolio, Trade, User} from '.'
 
 export interface WikifolioIdentifier {
 	id?: string;
@@ -11,17 +11,18 @@ interface WikifolioParamCountry {
 	language: string
 }
 
-interface WikifolioParamPage {
+interface ParamPage {
 	page: number
 	pageSize: number
 }
 
-interface WikifolioParamCache {
+interface ParamCache {
 	ignoreCache: boolean
 }
 
-interface WikifolioTradesParam extends WikifolioParamPage, WikifolioParamCountry {}
-interface WikifolioAnalysisParam extends WikifolioParamCache, WikifolioParamCountry {}
+export interface WikifolioOrdersParam extends ParamPage {}
+interface WikifolioTradesParam extends ParamPage, WikifolioParamCountry {}
+interface WikifolioAnalysisParam extends ParamCache, WikifolioParamCountry {}
 
 type WikifolioSearchTag =
 	// Anlageuniversum
@@ -340,7 +341,11 @@ export class Wikifolio {
 		// remove loaded attributes
 		attributes = attributes.filter(a => !this[a]);
 
-		if(attributes.includes('id')){
+		if(this.isOwned === undefined && attributes.includes('isOwned')){
+			await this.details();
+		}
+
+		if(this.id === undefined && attributes.includes('id')){
 			await this.basics();
 		}
 
@@ -572,12 +577,53 @@ export class Wikifolio {
 	public async watchlist(add: boolean = true): Promise<boolean> {
 		await this.fetch('id');
 
-		const res = await this.api.request({
+		const {success} = await this.api.request({
 			url: `${Api.url}dynamic/en/int/watchlistwikifolio/${add?'addwikifoliotowatchlist':'removewikifoliofromwatchlist'}`,
 			method: 'post',
 			json: {wikifolioId: this.id}
 		});
 
-		return res.success;
+		return success;
+	}
+
+	/**
+	 * Get order
+	 */
+	public order(id: string): Order {
+		return Order.instance(this.api, this, id);
+	}
+
+	/**
+	 * Returns open trades of a wikifolio
+	 */
+	public async orders(param: Partial<WikifolioOrdersParam> = {}){
+		await this.fetch('id');
+		return Order.list(this.api, this, param);
+	}
+
+	/**
+	 * Place wikifolio order
+	 */
+	public async trade(order: Partial<OrderPlaceParam>): Promise<Order> {
+		await this.fetch('id', 'isOwned');
+
+		if(!this.isOwned)
+			throw new Error('Can\'t place order in foreign wikifolio');
+
+		return await new Order({}, this, this.api).submit(order);
+	}
+
+	/**
+	 * Place a buy order
+	 */
+	public buy(order: Partial<OrderParam>): Promise<Order> {
+		return this.trade({...order, buysell: 'buy'});
+	}
+
+	/**
+	 * Place a sell order
+	 */
+	public sell(order: Partial<OrderParam>): Promise<Order> {
+		return this.trade({...order, buysell: 'sell'});
 	}
 }

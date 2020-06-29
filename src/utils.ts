@@ -3,12 +3,14 @@ import * as requestPromise from 'request-promise-native'
 
 const emptyValues = ['', '-', 'N/A'];
 
+type Node = Document | HTMLElement
+
 export function parseHtml(html: string){
 	const {window} = new JSDOM(html);
 	const {document} = window;
 	return {window, document,
-		$: (selector: string) => document.querySelector(selector) as HTMLElement,
-		$$: (selector: string) => Array.from(document.querySelectorAll(selector)),
+		$: (selector: string, parent: Node = document) => parent.querySelector(selector) as HTMLElement,
+		$$: (selector: string, parent: Node  = document) => Array.from(parent.querySelectorAll(selector)) as HTMLElement[],
 		attribute: (selector: string, attr: string) => { return document.querySelector(selector)![attr]; },
 		string: get.bind(null, document, 'string'),
 		int: get.bind(null, document, 'int'),
@@ -20,10 +22,10 @@ export function parseHtml(html: string){
 
 type ValueType = 'string' | 'int' | 'float' | 'date' | 'currency';
 
-function get(document: Document, type: ValueType = 'string', selector: string){
+function get(document: Document, type: ValueType = 'string', selector: string, parent?: HTMLElement){
 	let text: string;
 	try {
-		text = document.querySelector(selector)!.textContent!.replace(/\s\s+/g,  ' ').trim();
+		text = (parent||document).querySelector(selector)!.textContent!.replace(/\s\s+/g,  ' ').trim();
 	} catch(e) {
 		return undefined;
 	}
@@ -36,7 +38,7 @@ function formatNumber(string: string){
 
 export function toType(val: any, type: ValueType){
 	switch(type){
-		case 'string': return String(val);
+		case 'string': return String(val).trim();
 		case 'int': return toInt(val);
 		case 'float': return toFloat(val);
 		case 'date': return toDate(val);
@@ -45,18 +47,19 @@ export function toType(val: any, type: ValueType){
 	}
 }
 
-export function toDate(val: string){
+export function toDate(val?: string){
 	if(val === undefined || emptyValues.includes(val)) return undefined;
 	const p = val.split('.');
 	return new Date(parseInt(p[2]), parseInt(p[1])-1, parseInt(p[0]), 1);
 }
 
-export function toFloat(val: string){
+export function toFloat(val?: string){
 	if(val === undefined || emptyValues.includes(val)) return undefined;
 	return parseFloat(formatNumber(val));
 }
 
-export function toInt(val: string){
+export function toInt(val?: string){
+	if(val === undefined) return undefined;
 	return parseInt(formatNumber(val));
 }
 

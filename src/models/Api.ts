@@ -1,4 +1,4 @@
-import {Wikifolio, WikifolioSearch, WikifolioIdentifier, User} from '.'
+import {User, Wikifolio, WikifolioIdentifier, WikifolioSearch} from '.'
 import {JSDOM, requestPromise} from '../utils'
 
 const jar = requestPromise.jar();
@@ -97,8 +97,9 @@ export class Api {
 
 		let res = await request(options);
 
-		if(!fullResponse && String(options.url).includes('/api/'))
-			res = JSON.parse(res);
+		if(!fullResponse && typeof res === 'string' && String(options.url).includes('/api/')){
+			try { res = JSON.parse(res); } catch(e){}
+		}
 
 		return res;
 	}
