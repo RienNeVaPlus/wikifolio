@@ -122,7 +122,7 @@ for(const wikifolio of watchlist){
 #### 7. Get trader info
 
 ```ts
-const user = await wiki.user('riennevaplus');
+const user = wiki.user('riennevaplus');
 console.log(await user.details()); 
 ```
 
@@ -131,7 +131,7 @@ console.log(await user.details());
 #### 8. Get wikifolios of a trader
 
 ```ts
-const user = await wiki.user('riennevaplus');
+const user = wiki.user('riennevaplus');
 console.log(await user.wikifolios()); 
 ```
 
