@@ -154,6 +154,8 @@ const result = await wikifolio.buy({
 });
 ```
 
+![divider](./assets/divider.small.png)
+
 #### 10. Update an order
 
 ```ts
