@@ -33,6 +33,7 @@ This is an <strong>unofficial</strong> Node.js API client for <a href="https://w
 - Fetch **watchlist entries**
 - **Watch** / **unwatch** wikifolios
 - Fetch **users** & their **wikifolios**
+- **Trading**: place & modify **buy** & **sell orders**
 
 ![divider](./assets/divider.small.png)
 
