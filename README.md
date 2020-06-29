@@ -154,7 +154,7 @@ const result = await wikifolio.buy({
 });
 ```
 
-#### 9. Update an order
+#### 10. Update an order
 
 ```ts
 const wikifolio = wiki.wikifolio('wfobserver');
