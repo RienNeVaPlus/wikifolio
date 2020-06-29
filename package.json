@@ -1,6 +1,6 @@
 {
   "name": "wikifolio",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Wikifolio (unofficial) API",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -12,9 +12,9 @@
   "author": "RienNeVaPlus <?@rienneva.plus>",
   "license": "MIT",
   "scripts": {
-	  "start": "tsc -w",
-	  "build": "rm -rf ./dist && tsc",
-	  "prepublishOnly": "rm -rf ./dist && tsc"
+    "start": "tsc -w",
+    "build": "rm -rf ./dist && tsc",
+    "prepublishOnly": "rm -rf ./dist && tsc"
   },
   "ntl": {
     "runner": "yarn"
