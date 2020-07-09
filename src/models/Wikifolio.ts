@@ -138,7 +138,7 @@ export class Wikifolio {
 				chartImgUrl, wikifolioId, wikifolioIsin,
 				editor
 			} = json;
-			let wiki: Wikifolio = new Wikifolio(wikifolioFullName, api);
+			let wiki: Wikifolio = new Wikifolio({symbol:wikifolioFullName}, api);
 			const capital = rankingValues.find(i => i.label === 'Investiertes Kapital');
 			const user = editor.name.split(' | ');
 			wiki.set({
