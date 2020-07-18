@@ -76,6 +76,10 @@ export class Api {
 			resolveWithFullResponse: true
 		});
 
+		if(!res.headers['set-cookie']){
+			throw new Error('Invalid credentials');
+		}
+
 		cookies = this.opt.cookies = [...cookies, ...res.headers['set-cookie']];
 
 		if(!cookies || !cookies.length)
