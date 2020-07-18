@@ -1,4 +1,4 @@
-import {Api} from './models'
+import {Api as Wikifolio} from './models'
 
-export const Wikifolio = Api;
-export default Api;
+export {Wikifolio}
+export default Wikifolio;
