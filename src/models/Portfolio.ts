@@ -55,7 +55,7 @@ export class Portfolio {
 			name: Portfolio.getGroupName(g.type),
 			items: g.items.map(i => ({
 				...i,
-				link: Api.url + i.link.substr(1)
+				link: i.link.startsWith('http') ? i.link : Api.url + i.link.substr(1)
 			}))
 		}));
 	}
