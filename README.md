@@ -37,7 +37,7 @@ This is an <strong>unofficial</strong> Node.js API client for <a href="https://w
 
 ![divider](./assets/divider.small.png)
 
-🌞 **This repo is in active development and will receive additional features.** Contributors wanted 🙋
+🌞 **Contributors wanted**
 
 ![divider](./assets/divider.png)
 
@@ -58,9 +58,9 @@ yarn add wikifolio
 The examples assume the following setup:
 
 ```ts
-import {Wikifolio} from 'wikifolio'
+import Api from 'wikifolio'
 
-const wiki = new Wikifolio({email, password});
+const api = new Api({email, password});
 ```
 
 ![divider](./assets/divider.small.png)
@@ -68,7 +68,7 @@ const wiki = new Wikifolio({email, password});
 #### 1. Fetch details of a wikifolio
 
 ```ts
-const wikifolio = wiki.wikifolio('wfobserver');
+const wikifolio = api.wikifolio('wfobserver');
 console.log(await wikifolio.details());
 ```
 
@@ -77,7 +77,7 @@ console.log(await wikifolio.details());
 #### 2. Fetch wikifolio price
 
 ```ts
-const wikifolio = wiki.wikifolio('wfobserver');
+const wikifolio = api.wikifolio('wfobserver');
 console.log(await wikifolio.price());
 ```
 
@@ -86,7 +86,7 @@ console.log(await wikifolio.price());
 #### 3. Fetch wikifolio trades
 
 ```ts
-const wikifolio = wiki.wikifolio('wfobserver');
+const wikifolio = api.wikifolio('wfobserver');
 console.log(await wikifolio.trades({pageSize: 100, page: 1}));
 ```
 
@@ -95,7 +95,7 @@ console.log(await wikifolio.trades({pageSize: 100, page: 1}));
 #### 4. Fetch portfolio items of a wikifolio
 
 ```ts
-const wikifolio = wiki.wikifolio('wfobserver');
+const wikifolio = api.wikifolio('wfobserver');
 console.log(await wikifolio.portfolio());
 ```
 
@@ -104,7 +104,7 @@ console.log(await wikifolio.portfolio());
 #### 5. Search wikifolios
 
 ```ts
-const wikifolios = await wiki.search({query: 'Supervisor'});
+const wikifolios = await api.search({query: 'Supervisor'});
 console.log(wikifolios);
 ```
 
@@ -113,7 +113,7 @@ console.log(wikifolios);
 #### 6. Unwatch all wikifolios on the watchlist
 
 ```ts
-const watchlist = await wiki.watchlist();
+const watchlist = await api.watchlist();
 for(const wikifolio of watchlist){
     await wikifolio.watchlist(false);
 }
@@ -124,7 +124,7 @@ for(const wikifolio of watchlist){
 #### 7. Get trader info
 
 ```ts
-const user = wiki.user('riennevaplus');
+const user = api.user('riennevaplus');
 console.log(await user.details()); 
 ```
 
@@ -133,7 +133,7 @@ console.log(await user.details());
 #### 8. Get wikifolios of a trader
 
 ```ts
-const user = wiki.user('riennevaplus');
+const user = api.user('riennevaplus');
 console.log(await user.wikifolios()); 
 ```
 
@@ -144,7 +144,7 @@ console.log(await user.wikifolios());
 There's a similar `sell()` method.
 
 ```ts
-const wikifolio = wiki.wikifolio('wfobserver');
+const wikifolio = api.wikifolio('wfobserver');
 const result = await wikifolio.buy({
     amount: 1,
     limitPrice: 220,
@@ -159,7 +159,7 @@ const result = await wikifolio.buy({
 #### 10. Update an order
 
 ```ts
-const wikifolio = wiki.wikifolio('wfobserver');
+const wikifolio = api.wikifolio('wfobserver');
 const order = wikifolio.order('8b4da005-6750-4b4c-9dff-0364d3e07be0');
 console.log(await order.submit({limitPrice: 100}));
 ```
@@ -169,7 +169,7 @@ console.log(await order.submit({limitPrice: 100}));
 #### 11. List & remove wikifolio orders
 
 ```ts
-const wikifolio = wiki.wikifolio('wfobserver');
+const wikifolio = api.wikifolio('wfobserver');
 const orders = await wikifolio.orders({pageSize: 25, page: 0});
 
 for(const order of orders){
@@ -181,7 +181,7 @@ for(const order of orders){
 
 ### 👷 Todos
 - Improve documentation
-- Implement wikifolio sustanability
+- Implement wikifolio sustainability
 
 ![divider](./assets/divider.png)
 
