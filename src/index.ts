@@ -1,4 +1,4 @@
-import {Api as Wikifolio} from './models'
+export * from './models'
 
-export {Wikifolio}
-export default Wikifolio;
+import {Api} from './models'
+export default Api;
