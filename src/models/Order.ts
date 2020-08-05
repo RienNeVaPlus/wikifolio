@@ -8,7 +8,7 @@ type OrderSecurityType = 'TakeProfit' | 'StopLoss'
 export interface OrderParam {
 	amount: number
 	limitPrice: number,
-	orderType: 'limit' | 'stop',
+	orderType: OrderType,
 	stopLossLimitPrice?: number,
 	stopLossStopPrice?: number,
 	stopPrice?: number,
@@ -132,8 +132,8 @@ export class Order {
 	/**
 	 * Place order
 	 */
-	public async submit(order: Partial<OrderPlaceParam>): Promise<this> {
-		const {success, orderGuid} = await this.api.request({
+	public async submit(order: Partial<OrderPlaceParam>): Promise<[this, any]> {
+		const res = await this.api.request({
 			url: `${Api.url}api/virtualorder/placeorder`,
 			method: 'post',
 			json: removeValues({
@@ -143,12 +143,14 @@ export class Order {
 				validUntil: order.expiresAt instanceof Date ? order.expiresAt.toISOString() : order.expiresAt
 			})
 		});
+
+		const {success, orderGuid, reason} = res;
 		if(!success)
-			throw new Error('Unable to submit order');
+			throw new Error(`Unable to submit order (${reason||'n/a'})`);
 
 		this.id = orderGuid;
 
-		return this;
+		return [this, res];
 	}
 
 	/**
