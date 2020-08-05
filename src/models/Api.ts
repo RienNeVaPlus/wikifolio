@@ -124,5 +124,3 @@ export class Api {
 		return User.instance(this, nickname);
 	}
 }
-
-export default Api;
