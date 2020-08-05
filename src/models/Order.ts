@@ -132,7 +132,7 @@ export class Order {
 	/**
 	 * Place order
 	 */
-	public async submit(order: Partial<OrderPlaceParam>): Promise<[this, any]> {
+	public async submit(order: Partial<OrderPlaceParam>): Promise<this> {
 		const res = await this.api.request({
 			url: `${Api.url}api/virtualorder/placeorder`,
 			method: 'post',
@@ -150,7 +150,7 @@ export class Order {
 
 		this.id = orderGuid;
 
-		return [this, res];
+		return this;
 	}
 
 	/**
