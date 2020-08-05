@@ -5,9 +5,12 @@ type TradeOrderTypeSell = 'Sell' | 'SellLimit' | 'StopLoss' | 'SellStopLimit'
 type TradeOrderTypeBuy = 'Buy' | 'BuyLimit'
 type TradeOrderType = TradeOrderTypeBuy | TradeOrderTypeSell
 
+const buyTypes = ['Buy', 'BuyLimit'];
+const sellTypes = ['Sell', 'SellLimit', 'StopLoss', 'SellStopLimit'];
+
 export class Trade {
 	id?: string;
-	type?: 'buy' | 'sell';
+	type?: 'buy' | 'sell' | 'other';
 	orderType?: TradeOrderType;
 	name?: string;
 	isin?: string;
@@ -27,8 +30,8 @@ export class Trade {
 	corporateActionType?: any;
 	cash?: any;
 
-	private static getType(orderType: TradeOrderType): 'buy' | 'sell' {
-		return ['Buy', 'BuyLimit'].includes(orderType) ? 'buy' : 'sell';
+	private static getType(orderType: TradeOrderType): 'buy' | 'sell' | 'other' {
+		return buyTypes.includes(orderType) ? 'buy' : sellTypes.includes(orderType) ? 'sell' : 'other';
 	}
 
 	constructor(trade: Partial<Trade> = {}, public wikifolio: Wikifolio){
