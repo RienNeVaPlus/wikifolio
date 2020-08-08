@@ -21,6 +21,7 @@ export class Trade {
 	issuer?: number;
 	securityType?: number;
 	executionDate?: string;
+	executionPrice?: number;
 	executedAt?: Date;
 	performance?: number;
 	weightage?: number;

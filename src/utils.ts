@@ -8,7 +8,7 @@ type Node = Document | HTMLElement
 export function parseHtml(html: string){
 	const {window} = new JSDOM(html);
 	const {document} = window;
-	return {window, document,
+	return {html, window, document,
 		$: (selector: string, parent: Node = document) => parent.querySelector(selector) as HTMLElement,
 		$$: (selector: string, parent: Node  = document) => Array.from(parent.querySelectorAll(selector)) as HTMLElement[],
 		attribute: (selector: string, attr: string) => { return document.querySelector(selector)![attr]; },

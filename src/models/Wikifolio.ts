@@ -86,7 +86,7 @@ interface WikifolioComment {
 
 const regex = {
 	script: /<script type="text\/json">(.*)<\/script>/g,
-	wikifolioData: /wikifolio\.data = ({[^}]*})/g,
+	wikifolioData: /window\.wikifolio\.data = ({[^}]+});/
 };
 
 export class Wikifolio {
@@ -385,14 +385,19 @@ export class Wikifolio {
 		await this.fetch('symbol');
 
 		const wikifolioUrl = `${this.api.opt.locale.join('/')}/w/${this.symbol}`;
-		const {$, $$, attribute, string, float, date, currency} = parseHtml(
+		const {html, $, $$, attribute, string, float, date, currency} = parseHtml(
 			await this.api.request(wikifolioUrl)
 		);
 
 		// on page js
+		const json = regex.wikifolioData.exec(html);
+		if(!json || !json[1]){
+			throw new Error('Wikifolio JSON not found. This is probably a bug, please report it.');
+		}
+
 		const {
 			wikifolioId, userId, userOwnsWikifolio, isSuperWikifolio, isChallengeWikifolio, containsLeverageProducts
-		} = eval(`(${regex.wikifolioData.exec($$('body script').slice(-1)[0].innerHTML)![1]})`);
+		} = eval(`(${json[1]})`);
 
 		// the table contains no identifiers and changes depending on the wikifolio state -.-
 		const table = $('table.c-certificate__key-table').innerHTML;
@@ -416,7 +421,7 @@ export class Wikifolio {
 			isin: string('.gtm-copy-isin'),
 			title: string('.c-wf-head__title-text'),
 			isOwned: userOwnsWikifolio,
-			capital: currency('.c-certificate__item--capital .c-certificate__item-value'),
+			capital: currency('.c-certificate__item:nth-child(2) .c-certificate__item-value'),
 			createdAt: date('.c-masterdata__item:nth-child(2) .c-masterdata__item-value'),
 
 			publishedAt,
@@ -444,15 +449,15 @@ export class Wikifolio {
 			decisionMaking: $$('.c-wfdecision__item').map(e => e.textContent!),
 
 			comments: $$('.c-wfcomment article').map(e => {
-				const body = e.querySelector('.c-wfcomment__item-content p')!;
+				const body = e.querySelector('div')!;
 				const d = String(e.querySelector('.c-wfcomment__item-date')!.textContent)
 					.trim().split(/[. :]/g).map(n => parseInt(n));
 				const ref = e.querySelector('.c-wfcomment__item-subheader-content');
 
 				return removeValues({
 					ref: ref ? String(ref.textContent).trim() : undefined,
-					html: body.innerHTML,
-					text: body.textContent,
+					html: body.innerHTML.trim(),
+					text: body.textContent!.trim(),
 					createdAt: new Date(d[2], d[1]-1, d[0], d[4]+2, d[5])
 				})
 			})
@@ -520,6 +525,7 @@ export class Wikifolio {
 		);
 
 		this.set({
+			rank: toFloat(l.find(i => i.label === 'Top-wikifolio-Rangliste').value),
 			maxdraw: toFloat(l.find(i => i.label === 'Maximaler Verlust (bisher)').value),
 			perf52weekHigh: toFloat(l.find(i => i.label == '52-Wochen-Hoch').value),
 			sharperatio: toFloat(l.find(i => i.label === 'Sharpe Ratio').value),
