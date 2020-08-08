@@ -44,10 +44,8 @@ export class Api {
 	private async auth(): Promise<any[]> {
 		let { opt: {cookies} } = this;
 
-		// // put cookies in jar
-		if(cookies.length){
-			return cookies.map(cookie => jar.setCookie(cookie, Api.url));
-		}
+		if(cookies.length)
+			return cookies;
 
 		const {email, password} = this.opt;
 
@@ -64,7 +62,7 @@ export class Api {
 		const __RequestVerificationToken = (document.querySelector('[name=__RequestVerificationToken]') as HTMLInputElement).value;
 		const ufprt = (document.querySelector('[name=ufprt]') as HTMLInputElement).value;
 
-		// do login with session vars
+		// login with session vars
 		const res = await request.post({
 			url,
 			formData: {
@@ -76,14 +74,11 @@ export class Api {
 			resolveWithFullResponse: true
 		});
 
-		if(!res.headers['set-cookie']){
-			throw new Error('Invalid credentials');
-		}
+		if(!res.headers['set-cookie'])
+			throw new Error('Login failed, Cookie not found');
 
 		cookies = this.opt.cookies = [...cookies, ...res.headers['set-cookie']];
-
-		if(!cookies || !cookies.length)
-			throw new Error('Login failed, Cookie not found');
+		cookies.map(cookie => jar.setCookie(cookie, Api.url));
 
 		return cookies;
 	}
