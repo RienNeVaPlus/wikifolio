@@ -475,10 +475,15 @@ export class Wikifolio {
 		if(this.sources.has('price') && !ignoreCache) return this;
 		await this.fetch('id');
 
+		const res = await this.api.request(`api/wikifolio/${this.id}/price`) || {};
+
+		if(!res.ask)
+			console.warn('Could not retrieve price for', this.symbol);
+
 		const {
 			ask, bid, quantityLimitBid, quantityLimitAsk, calculationDate, validUntilDate, midPrice,
 			showMidPrice, currency, isCurrencyConverted, isTicking
-		} = await this.api.request(`api/wikifolio/${this.id}/price`);
+		} = res;
 
 		this.set({
 			ask, bid, quantityLimitBid, quantityLimitAsk, midPrice, showMidPrice, currency, isCurrencyConverted, isTicking,
