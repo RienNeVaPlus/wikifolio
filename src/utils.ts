@@ -47,10 +47,23 @@ export function toType(val: any, type: ValueType){
 	}
 }
 
-export function toDate(val?: string){
+export function toDate(val?: string) {
 	if(val === undefined || emptyValues.includes(val)) return undefined;
-	const p = val.split('.');
-	return new Date(parseInt(p[2]), parseInt(p[1])-1, parseInt(p[0]), 1);
+	let p;
+	if(val.includes('T')){
+		return new Date(
+			parseInt(val.substr(0,4)),
+			parseInt(val.substr(4, 2))-1,
+			parseInt(val.substr(6, 2)),
+			parseInt(val.substr(9, 2)),
+			parseInt(val.substr(11, 2))
+		);
+	}
+	if(val.includes('.')){
+		p = val.split('.');
+		return new Date(parseInt(p[2]), parseInt(p[1])-1, parseInt(p[0]), 1);
+	}
+	return undefined;
 }
 
 export function toFloat(val?: string){
