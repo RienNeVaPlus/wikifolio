@@ -20,6 +20,9 @@ interface ParamCache {
 	ignoreCache: boolean
 }
 
+export interface WikifolioHistoryParam {
+	useDate: boolean
+}
 export interface WikifolioOrdersParam extends ParamPage {}
 interface WikifolioTradesParam extends ParamPage, WikifolioParamCountry {}
 interface WikifolioAnalysisParam extends ParamCache, WikifolioParamCountry {}
@@ -581,6 +584,24 @@ export class Wikifolio {
 	// public async sustainability(): Promise<void> {
 	// 	console.error('Not yet implemented');
 	// }
+
+	public async history({useDate}: Partial<WikifolioHistoryParam> = {useDate: true}) {
+		await this.fetch('id');
+
+		const data = await this.api.request({
+			url: `${Api.url}api/chart/${this.id}/indexhistory`,
+			method: 'get'
+		});
+
+		if(!useDate) return data;
+
+		data.timestamps = data.timestamps.map(ts => toDate(ts));
+		data.creationDate = toDate(data.creationDate);
+		data.publishDate = toDate(data.publishDate);
+		data.todaysFirstTick = toDate(data.todaysFirstTick);
+
+		return data;
+	}
 
 	/**
 	 * Toggle watchlist status of wikifolio
