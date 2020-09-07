@@ -90,9 +90,16 @@ const wikifolio = api.wikifolio('wfobserver');
 console.log(await wikifolio.trades({pageSize: 100, page: 1}));
 ```
 
+#### 4. Fetch wikifolio index history (chart)
+
+```ts
+const wikifolio = api.wikifolio('wfobserver');
+console.log(await wikifolio.history());
+```
+
 ![divider](./assets/divider.small.png)
 
-#### 4. Fetch portfolio items of a wikifolio
+#### 5. Fetch portfolio items of a wikifolio
 
 ```ts
 const wikifolio = api.wikifolio('wfobserver');
@@ -101,7 +108,7 @@ console.log(await wikifolio.portfolio());
 
 ![divider](./assets/divider.small.png)
 
-#### 5. Search wikifolios
+#### 6. Search wikifolios
 
 ```ts
 const wikifolios = await api.search({query: 'Supervisor'});
@@ -110,7 +117,7 @@ console.log(wikifolios);
 
 ![divider](./assets/divider.small.png)
 
-#### 6. Unwatch all wikifolios on the watchlist
+#### 7. Unwatch all wikifolios on the watchlist
 
 ```ts
 const watchlist = await api.watchlist();
@@ -121,7 +128,7 @@ for(const wikifolio of watchlist){
 
 ![divider](./assets/divider.small.png)
 
-#### 7. Get trader info
+#### 8. Get trader info
 
 ```ts
 const user = api.user('riennevaplus');
@@ -130,7 +137,7 @@ console.log(await user.details());
 
 ![divider](./assets/divider.small.png)
 
-#### 8. Get wikifolios of a trader
+#### 9. Get wikifolios of a trader
 
 ```ts
 const user = api.user('riennevaplus');
@@ -139,7 +146,7 @@ console.log(await user.wikifolios());
 
 ![divider](./assets/divider.small.png)
 
-#### 9. Place a buy order
+#### 10. Place a buy order
 
 There's a similar `sell()` method.
 
@@ -156,7 +163,7 @@ const result = await wikifolio.buy({
 
 ![divider](./assets/divider.small.png)
 
-#### 10. Update an order
+#### 11. Update an order
 
 ```ts
 const wikifolio = api.wikifolio('wfobserver');
@@ -166,7 +173,7 @@ console.log(await order.submit({limitPrice: 100}));
 
 ![divider](./assets/divider.small.png)
 
-#### 11. List & remove wikifolio orders
+#### 12. List & remove wikifolio orders
 
 ```ts
 const wikifolio = api.wikifolio('wfobserver');
