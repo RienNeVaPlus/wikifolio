@@ -105,7 +105,7 @@ export class Api {
 
 		if(!fullResponse && typeof res === 'string' && String(options.url).includes('/api/')){
 			try { res = JSON.parse(res); } catch(e){ throw new Error('Invalid JSON'); }
-			if(res.message === 'Authorization has been denied for this request.')
+			if(res && res.message === 'Authorization has been denied for this request.')
 				throw new Error(res.message);
 		}
 
