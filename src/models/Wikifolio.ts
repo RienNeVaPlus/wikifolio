@@ -21,6 +21,8 @@ interface ParamCache {
 }
 
 export interface WikifolioHistoryParam {
+	generateArray: boolean
+	generateObject: boolean
 	useDate: boolean
 }
 export interface WikifolioOrdersParam extends ParamPage {}
@@ -585,7 +587,11 @@ export class Wikifolio {
 	// 	console.error('Not yet implemented');
 	// }
 
-	public async history({useDate}: Partial<WikifolioHistoryParam> = {useDate: true}) {
+	public async history({
+		useDate = true,
+		generateArray = true,
+		generateObject = false
+	}: Partial<WikifolioHistoryParam> = {}) {
 		await this.fetch('id');
 
 		const data = await this.api.request({
@@ -593,12 +599,20 @@ export class Wikifolio {
 			method: 'get'
 		});
 
-		if(!useDate) return data;
+		if(generateArray){
+			data.array = data.timestamps.map((ts, i) => [ts, data.values[i]]);
+		}
 
-		data.timestamps = data.timestamps.map(ts => toDate(ts));
-		data.creationDate = toDate(data.creationDate);
-		data.publishDate = toDate(data.publishDate);
-		data.todaysFirstTick = toDate(data.todaysFirstTick);
+		if(generateObject){
+			data.object = data.timestamps.reduce((a, v, i) => ({...a, [v]: data.values[i]}), {});
+		}
+
+		if(useDate){
+			data.dates = data.timestamps.map(ts => toDate(ts));
+			data.creationDate = toDate(data.creationDate);
+			data.publishDate = toDate(data.publishDate);
+			data.todaysFirstTick = toDate(data.todaysFirstTick);
+		}
 
 		return data;
 	}
