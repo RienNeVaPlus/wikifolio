@@ -2,8 +2,8 @@ import {matchResult, parseHtml, removeValues, toCurrency, toDate, toFloat, toInt
 import {Api, Order, OrderParam, OrderPlaceParam, Portfolio, Trade, User} from '.'
 
 export interface WikifolioIdentifier {
-	id?: string;
-	symbol?: string;
+	id?: string
+	symbol?: string
 }
 
 interface WikifolioParamCountry {
@@ -84,23 +84,23 @@ export interface WikifolioSearch {
 
 interface WikifolioComment {
 	ref?: string
-	html: string;
-	text: string;
-	createdAt: Date;
+	html: string
+	text: string
+	createdAt: Date
 }
 
 const regex = {
 	script: /<script type="text\/json">(.*)<\/script>/g,
-	wikifolioData: /window\.wikifolio\.data = ({[^}]+});/
-};
+	wikifolioData: /window\.wikifolio\.data = ({[^}]+})/
+}
 
 export class Wikifolio {
-	private static instances: {[key: string]: Wikifolio} = {};
+	private static instances: {[key: string]: Wikifolio} = {}
 	public static instance(api: Api, identifier: WikifolioIdentifier | string): Wikifolio {
-		const id = typeof identifier === 'string' ? Wikifolio.parseIdentifier(identifier) : identifier;
-		const hash = JSON.stringify(id);
+		const id = typeof identifier === 'string' ? Wikifolio.parseIdentifier(identifier) : identifier
+		const hash = JSON.stringify(id)
 		return this.instances[hash] = this.instances[hash]
-			|| new Wikifolio(id, api);
+			|| new Wikifolio(id, api)
 	}
 
 	/**
@@ -108,9 +108,9 @@ export class Wikifolio {
 	 */
 	private static parseIdentifier(identifier: string): WikifolioIdentifier {
 		switch(identifier.length){
-			case 8: return {symbol: 'wf'+identifier};
-			case 10: return {symbol: identifier};
-			default: return {id: identifier};
+			case 8: return {symbol: 'wf'+identifier}
+			case 10: return {symbol: identifier}
+			default: return {id: identifier}
 		}
 	}
 
@@ -127,25 +127,25 @@ export class Wikifolio {
 			theme: true,
 			super: true,
 			...param
-		})}`);
+		})}`)
 
-		let match: null | RegExpExecArray;
-		const wikis: Wikifolio[] = [];
+		let match: null | RegExpExecArray
+		const wikis: Wikifolio[] = []
 
 		do {
-			match = regex.script.exec(html);
-			if(!match) continue;
-			const json = JSON.parse(match[1]);
+			match = regex.script.exec(html)
+			if(!match) continue
+			const json = JSON.parse(match[1])
 			const {
 				wikifolioFullName, isWatchlisted,
 				mainRankingValue, status, tags,
 				shortDescription: title, rankingValues, wikifolioUrl,
 				chartImgUrl, wikifolioId, wikifolioIsin,
 				editor
-			} = json;
-			let wiki: Wikifolio = new Wikifolio({symbol:wikifolioFullName}, api);
-			const capital = rankingValues.find(i => i.label === 'Investiertes Kapital');
-			const user = editor.name.split(' | ');
+			} = json
+			let wiki: Wikifolio = new Wikifolio({symbol:wikifolioFullName}, api)
+			const capital = rankingValues.find(i => i.label === 'Investiertes Kapital')
+			const user = editor.name.split(' | ')
 			wiki.set({
 				capital: capital ? toCurrency(capital.displayValue) : 0,
 				rank: toFloat(mainRankingValue.displayValue),
@@ -167,23 +167,23 @@ export class Wikifolio {
 				chartImgUrl,
 				wikifolioUrl: Api.url + wikifolioUrl.substr(1),
 				status: status
-			});
-			wikis.push(wiki);
-		} while(match != null);
+			})
+			wikis.push(wiki)
+		} while(match != null)
 
-		return wikis;
+		return wikis
 	}
 
 	/**
 	 * Returns watchlisted Wikifolio[]
 	 */
 	public static async watchlist(api: Api) {
-		const html = await api.request(`${api.opt.locale.join('/')}/watchlist/${api.opt.locale[0]==='de'?'bearbeiten':'edit'}`);
+		const html = await api.request(`${api.opt.locale.join('/')}/watchlist/${api.opt.locale[0]==='de'?'bearbeiten':'edit'}`)
 
-		let match = regex.script.exec(html);
-		const wikis: Wikifolio[] = [];
+		let match = regex.script.exec(html)
+		const wikis: Wikifolio[] = []
 
-		const {searchResults} = JSON.parse(match![1]);
+		const {searchResults} = JSON.parse(match![1])
 		for(const item of searchResults){
 			const {
 				isNotificationSet,
@@ -196,11 +196,11 @@ export class Wikifolio {
 				wikifolioUrl,
 				editor,
 				rankingValues
-			} = item;
+			} = item
 
-			const symbol = wikifolioUrl.split('/').slice(-1)[0];
-			let wikifolio: Wikifolio = new Wikifolio({symbol, id}, api);
-			const user = editor.name.split(' | ');
+			const symbol = wikifolioUrl.split('/').slice(-1)[0]
+			let wikifolio: Wikifolio = new Wikifolio({symbol, id}, api)
+			const user = editor.name.split(' | ')
 
 			wikifolio.set({
 				isin,
@@ -237,191 +237,196 @@ export class Wikifolio {
 				chartImgUrl,
 				wikifolioUrl: Api.url + wikifolioUrl.substr(1),
 				status: status
-			});
-			wikis.push(wikifolio);
+			})
+			wikis.push(wikifolio)
 		}
 
-		return wikis;
+		return wikis
 	}
 
 	constructor(identifiers: WikifolioIdentifier, private api: Api){
-		this.set(identifiers);
+		this.set(identifiers)
 	}
 
 	public set(wikifolio: Partial<Wikifolio>){
-		return Object.assign(this, removeValues(wikifolio));
+		return Object.assign(this, removeValues(wikifolio))
 	}
 
-	sources = new Set<string>();
+	sources = new Set<string>()
 
-	user?: User;
+	user?: User
 
-	id?: string;
-	symbol?: string;
+	id?: string
+	symbol?: string
 
-	wikifolioUrl?: string;
-	isin?: string;
-	wkn?: string;
-	createdAt?: Date;
-	publishedAt?: Date;
+	wikifolioUrl?: string
+	isin?: string
+	wkn?: string
+	createdAt?: Date
+	publishedAt?: Date
 
-	status?: number;
-	tags?: string[];
+	status?: number
+	tags?: string[]
 
-	capital?: number;
-	title?: string;
-	tradeidea?: string;
-	highWatermark?: number;
-	indexLevel?: number;
-	fee?: number;
-	liquidation?: number;
-	tradingVolume?: number;
+	capital?: number
+	title?: string
+	tradeidea?: string
+	highWatermark?: number
+	indexLevel?: number
+	fee?: number
+	liquidation?: number
+	tradingVolume?: number
 
-	decisionMaking?: string[];
+	decisionMaking?: string[]
 
-	chartImgUrl?: string;
-	investable?: boolean;
-	containsLeverageProducts?: boolean;
-	realMoney?: boolean;
-	isWatchlisted?: boolean;
-	name?: string;
-	isOwned?: boolean;
+	chartImgUrl?: string
+	investable?: boolean
+	containsLeverageProducts?: boolean
+	realMoney?: boolean
+	isWatchlisted?: boolean
+	name?: string
+	isOwned?: boolean
 
-	rank?: number; // Top-Wikifolio-Rangliste
-	isSuper?: boolean; // isSuperWikifolio
-	isChallenge?: boolean; // isChallengeWikifolio
-	sharperatio?: number;
+	rank?: number // Top-Wikifolio-Rangliste
+	isSuper?: boolean // isSuperWikifolio
+	isChallenge?: boolean // isChallengeWikifolio
+  isClosed?: boolean
+	sharperatio?: number
 
-	perf12m?: number;
-	perf6m?: number;
-	perf3m?: number;
-	perf1m?: number;
+	perf12m?: number
+	perf6m?: number
+	perf3m?: number
+	perf1m?: number
 
-	perfever?: number;
-	perfemission?: number;
-	perfannually?: number;
-	perfytd?: number;
-	esgScore?: number;
-	maxdraw?: number;
-	aum?: number;
-	risk?: number;
+	perfever?: number
+	perfemission?: number
+	perfannually?: number
+	perfytd?: number
+	esgScore?: number
+	maxdraw?: number
+	aum?: number
+	risk?: number
 
-	perftoday?: number;
-	perfintra?: number;
+	perftoday?: number
+	perfintra?: number
 
-	perf52weekHigh?: number;
+	perf52weekHigh?: number
 
 	// price
-	ask?: number;
-	bid?: number;
-	quantityLimitBid?: number;
-	quantityLimitAsk?: number;
-	priceCalculatedAt?: Date;
-	priceValidUntil?: Date;
-	midPrice?: number;
-	showMidPrice?: boolean;
-	currency?: string;
-	isCurrencyConverted?: boolean;
-	isTicking?: boolean;
+	ask?: number
+	bid?: number
+	quantityLimitBid?: number
+	quantityLimitAsk?: number
+	priceCalculatedAt?: Date
+	priceValidUntil?: Date
+	midPrice?: number
+	showMidPrice?: boolean
+	currency?: string
+	isCurrencyConverted?: boolean
+	isTicking?: boolean
 
 	// watchlist wikifolios
-	isNotificationSet?: boolean;
-	buyint?: number;
-	bought30d?: number;
-	perf36m?: number;
-	perf60m?: number;
-	perf52week?: number;
-	tradevol30d?: number;
-	perfbuy?: number;
+	isNotificationSet?: boolean
+	buyint?: number
+	bought30d?: number
+	perf36m?: number
+	perf60m?: number
+	perf52week?: number
+	tradevol30d?: number
+	perfbuy?: number
 
-	comments?: WikifolioComment[];
+	comments?: WikifolioComment[]
 
 	// user wikifolios
-	category?: string;
+	category?: string
 
 	/**
 	 * Fetch specific attributes
 	 */
 	private async fetch(...attributes: string[]): Promise<this> {
 		// remove loaded attributes
-		attributes = attributes.filter(a => !this[a]);
+		attributes = attributes.filter(a => !this[a])
 
 		if(this.isOwned === undefined && attributes.includes('isOwned')){
-			await this.details();
+			await this.details()
 		}
 
 		if(this.id === undefined && attributes.includes('id')){
-			await this.basics();
+			await this.basics()
 		}
 
 		if(attributes.includes('symbol')){
 			// TODO: find a way to get the symbol with only the id provided
-			throw new Error('Missing Wikifolio symbol');
+			throw new Error('Missing Wikifolio symbol')
 		}
 
-		return this;
+		return this
 	}
 
 	/**
 	 * Fetch basic data, mainly required for obtaining the ID when only a symbol is provided
 	 */
 	public async basics(ignoreCache: boolean = false): Promise<this> {
-		if(this.sources.has('basics') && !ignoreCache) return this;
-		await this.fetch('symbol');
+		if(this.sources.has('basics') && !ignoreCache) return this
+		await this.fetch('symbol')
 
 		const {id, title, traderNickname, performanceEver, performanceToday} =
-			await this.api.request(`api/wikifolio/${this.symbol}/basicdata`);
+			await this.api.request(`api/wikifolio/${this.symbol}/basicdata`)
 
-		this.sources.add('basics');
+		this.sources.add('basics')
 
 		return this.set({
 			id, title,
 			user: User.instance(this.api, traderNickname),
 			perfever: toFloat(performanceEver.displayValue),
 			perftoday: toFloat(performanceToday.displayValue)
-		});
+		})
 	}
 
 	/**
 	 * Fetches Wikifolio details from HTML (slow)
 	 */
 	public async details(ignoreCache: boolean = false): Promise<this> {
-		if(this.sources.has('details') && !ignoreCache) return this;
-		await this.fetch('symbol');
+		if(this.sources.has('details') && !ignoreCache) return this
+		await this.fetch('symbol')
 
-		const wikifolioUrl = `${this.api.opt.locale.join('/')}/w/${this.symbol}`;
+		const wikifolioUrl = `${this.api.opt.locale.join('/')}/w/${this.symbol}`
 		const {html, $, $$, attribute, string, float, date, currency} = parseHtml(
 			await this.api.request(wikifolioUrl)
-		);
+		)
 
 		// on page js
-		const json = regex.wikifolioData.exec(html);
+		const json = regex.wikifolioData.exec(html)
 		if(!json || !json[1]){
-			throw new Error('Wikifolio JSON not found. This is probably a bug, please report it.');
+			throw new Error('Wikifolio JSON not found. This is probably a bug, please report it.')
 		}
 
 		const {
 			wikifolioId, userId, userOwnsWikifolio, isSuperWikifolio, isChallengeWikifolio, containsLeverageProducts
-		} = eval(`(${json[1]})`);
+		} = eval(`(${json[1]})`)
+		
+    // the table is not only missing identifiers but also changes depending on the wikifolio state -.-
+		const table = $('table.c-certificate__key-table')
+		if(!table) return this.set({id: wikifolioId, isClosed:true})
+    
+		const tableHTML = table.innerHTML
+		const publishedAt = toDate(matchResult(/Erstemission<\/td>\s[^>]+>\s.+([0-9.]{10})/, tableHTML))
+		const fee = parseInt(matchResult(/Performancegebühr<\/td>\s[^>]+>\s[ ]+([^ ]+)/, tableHTML))
+		const liquidation = toFloat(matchResult(/Liquidationskennzahl<\/td>\s[^>]+>\s[ ]+([^ ]+)/, tableHTML))
+		const tradingVolume = toCurrency(matchResult(/Handelsvolumen<\/td>\s.+\s.+\s[ ]+([^ ]+)/, tableHTML))
 
-		// the table contains no identifiers and changes depending on the wikifolio state -.-
-		const table = $('table.c-certificate__key-table').innerHTML;
-		const publishedAt = toDate(matchResult(/Erstemission<\/td>\s[^>]+>\s.+([0-9.]{10})/, table));
-		const fee = parseInt(matchResult(/Performancegebühr<\/td>\s[^>]+>\s[ ]+([^ ]+)/, table));
-		const liquidation = toFloat(matchResult(/Liquidationskennzahl<\/td>\s[^>]+>\s[ ]+([^ ]+)/, table));
-		const tradingVolume = toCurrency(matchResult(/Handelsvolumen<\/td>\s.+\s.+\s[ ]+([^ ]+)/, table));
-
-		const nickname = string('.c-trader__name:nth-child(2)');
-		const user = User.instance(this.api, nickname);
+		const nickname = string('.c-trader__name:nth-child(2)')
+		const user = User.instance(this.api, nickname)
 		user.set({
 			id: userId,
 			name: string('.c-trader__name:nth-child(2)'),
 			profileUrl: Api.url + attribute('.gtm-profile-link', 'href').substr(1)
-		});
+		})
 
 		this.set({
 			user,
 			id: wikifolioId,
+      isClosed: false,
 			wikifolioUrl: Api.url + wikifolioUrl.substr(1),
 			isin: string('.gtm-copy-isin'),
 			title: string('.c-wf-head__title-text'),
@@ -454,10 +459,10 @@ export class Wikifolio {
 			decisionMaking: $$('.c-wfdecision__item').map(e => e.textContent!),
 
 			comments: $$('.c-wfcomment article').map(e => {
-				const body = e.querySelector('div')!;
+				const body = e.querySelector('div')!
 				const d = String(e.querySelector('.c-wfcomment__item-date')!.textContent)
-					.trim().split(/[. :]/g).map(n => parseInt(n));
-				const ref = e.querySelector('.c-wfcomment__item-subheader-content');
+					.trim().split(/[. :]/g).map(n => parseInt(n))
+				const ref = e.querySelector('.c-wfcomment__item-subheader-content')
 
 				return removeValues({
 					ref: ref ? String(ref.textContent).trim() : undefined,
@@ -466,65 +471,65 @@ export class Wikifolio {
 					createdAt: new Date(d[2], d[1]-1, d[0], d[4]+2, d[5])
 				})
 			})
-		});
+		})
 
-		this.sources.add('details');
+		this.sources.add('details')
 
-		return this;
+		return this
 	}
 
 	/**
 	 * Fetch wikifolio price
 	 */
 	public async price(ignoreCache: boolean = false): Promise<this> {
-		if(this.sources.has('price') && !ignoreCache) return this;
-		await this.fetch('id');
+		if(this.sources.has('price') && !ignoreCache) return this
+		await this.fetch('id')
 
-		const res = await this.api.request(`api/wikifolio/${this.id}/price`) || {};
+		const res = await this.api.request(`api/wikifolio/${this.id}/price`) || {}
 
 		if(!res.ask)
-			console.warn('Could not retrieve price for', this.symbol);
+			console.warn('Could not retrieve price for', this.symbol)
 
 		const {
 			ask, bid, quantityLimitBid, quantityLimitAsk, calculationDate, validUntilDate, midPrice,
 			showMidPrice, currency, isCurrencyConverted, isTicking
-		} = res;
+		} = res
 
 		this.set({
 			ask, bid, quantityLimitBid, quantityLimitAsk, midPrice, showMidPrice, currency, isCurrencyConverted, isTicking,
 			priceCalculatedAt: new Date(calculationDate),
 			priceValidUntil: new Date(validUntilDate)
-		});
+		})
 
-		this.sources.add('price');
+		this.sources.add('price')
 
-		return this;
+		return this
 	}
 
 	/**
 	 * Fetch portfolio
 	 */
 	public async portfolio(): Promise<Portfolio> {
-		await this.fetch('symbol');
+		await this.fetch('symbol')
 
 		const res = await this.api.request(
 		`api/wikifolio/${this.symbol}/portfolio${toQueryString({
 			country: this.api.opt.locale[0],
 			language: this.api.opt.locale[1]
-		})}`);
+		})}`)
 
-		this.isSuper = res.isSuperWikifolio;
-		this.currency = res.currency;
+		this.isSuper = res.isSuperWikifolio
+		this.currency = res.currency
 
-		return new Portfolio({...res, isSuper: this.isSuper}, this);
+		return new Portfolio({...res, isSuper: this.isSuper}, this)
 	}
 
 	/**
 	 * Loads performance information
 	 */
 	public async analysis({ignoreCache, ...param}: Partial<WikifolioAnalysisParam> = {}): Promise<this> {
-		if(this.sources.has('analysis') && !ignoreCache) return this;
-		await this.fetch('id');
+		if(this.sources.has('analysis') && !ignoreCache) return this
+		await this.fetch('id')
 
 		const {analysis: {keyFigures: l}} = await this.api.request(
 			`api/wikifolio/${this.id}/analysis${toQueryString({
@@ -532,7 +537,7 @@ export class Wikifolio {
 				language: this.api.opt.locale[1],
 				...param
 			})}`
-		);
+		)
 
 		this.set({
 			rank: toFloat(l.find(i => i.label === 'Top-wikifolio-Rangliste').value),
@@ -548,18 +553,18 @@ export class Wikifolio {
 			perf3m: toFloat(l.find(i => i.label === 'Performance 3 Monate').value),
 			perf1m: toFloat(l.find(i => i.label === 'Performance 1 Monat').value),
 			perfintra: toFloat(l.find(i => i.label === 'Performance Intraday').value),
-		});
+		})
 
-		this.sources.add('analysis');
+		this.sources.add('analysis')
 
-		return this;
+		return this
 	}
 
 	/**
 	 * Fetches Trade[] sorted by date
 	 */
 	public async trades(param: Partial<WikifolioTradesParam> = {}){
-		await this.fetch('id');
+		await this.fetch('id')
 
 		const {tradeHistory: {pageCount, isSuperWikifolio, orders}} =	await this.api.request(
 			`api/wikifolio/${this.id}/tradehistory${toQueryString({
@@ -569,10 +574,10 @@ export class Wikifolio {
 				language: this.api.opt.locale[1],
 				...param
 			})}`
-		) as {tradeHistory: {pageCount: number, isSuperWikifolio: boolean, orders: any[]}};
+		) as {tradeHistory: {pageCount: number, isSuperWikifolio: boolean, orders: any[]}}
 
-		this.isSuper = isSuperWikifolio;
-		const trades: Trade[] = orders.map(order => new Trade(removeValues(order, null), this));
+		this.isSuper = isSuperWikifolio
+		const trades: Trade[] = orders.map(order => new Trade(removeValues(order, null), this))
 
 		return {
 			pageCount,
@@ -584,7 +589,7 @@ export class Wikifolio {
 	//  * Fetch sustainability
 	//  */
 	// public async sustainability(): Promise<void> {
-	// 	console.error('Not yet implemented');
+	// 	console.error('Not yet implemented')
 	// }
 
 	public async history({
@@ -592,84 +597,84 @@ export class Wikifolio {
 		generateArray = true,
 		generateObject = false
 	}: Partial<WikifolioHistoryParam> = {}) {
-		await this.fetch('id');
+		await this.fetch('id')
 
 		const data = await this.api.request({
 			url: `${Api.url}api/chart/${this.id}/indexhistory`,
 			method: 'get'
-		});
+		})
 
 		if(generateArray){
-			data.array = data.timestamps.map((ts, i) => [ts, data.values[i]]);
+			data.array = data.timestamps.map((ts, i) => [ts, data.values[i]])
 		}
 
 		if(generateObject){
-			data.object = data.timestamps.reduce((a, v, i) => ({...a, [v]: data.values[i]}), {});
+			data.object = data.timestamps.reduce((a, v, i) => ({...a, [v]: data.values[i]}), {})
 		}
 
 		if(useDate){
-			data.dates = data.timestamps.map(ts => toDate(ts));
-			data.creationDate = toDate(data.creationDate);
-			data.publishDate = toDate(data.publishDate);
-			data.todaysFirstTick = toDate(data.todaysFirstTick);
+			data.dates = data.timestamps.map(ts => toDate(ts))
+			data.creationDate = toDate(data.creationDate)
+			data.publishDate = toDate(data.publishDate)
+			data.todaysFirstTick = toDate(data.todaysFirstTick)
 		}
 
-		return data;
+		return data
 	}
 
 	/**
 	 * Toggle watchlist status of wikifolio
 	 */
 	public async watchlist(add: boolean = true): Promise<boolean> {
-		await this.fetch('id');
+		await this.fetch('id')
 
 		const {success} = await this.api.request({
 			url: `${Api.url}dynamic/en/int/watchlistwikifolio/${add?'addwikifoliotowatchlist':'removewikifoliofromwatchlist'}`,
 			method: 'post',
 			json: {wikifolioId: this.id}
-		});
+		})
 
-		return success;
+		return success
 	}
 
 	/**
 	 * Get order
 	 */
 	public order(id: string): Order {
-		return Order.instance(this.api, this, id);
+		return Order.instance(this.api, this, id)
 	}
 
 	/**
 	 * Returns open trades of a wikifolio
 	 */
 	public async orders(param: Partial<WikifolioOrdersParam> = {}){
-		await this.fetch('id');
-		return Order.list(this.api, this, param);
+		await this.fetch('id')
+		return Order.list(this.api, this, param)
 	}
 
 	/**
 	 * Place wikifolio order
 	 */
 	public async trade(order: Partial<OrderPlaceParam>): Promise<Order> {
-		await this.fetch('id', 'isOwned');
+		await this.fetch('id', 'isOwned')
 
 		if(!this.isOwned)
-			throw new Error('Can\'t place order in foreign wikifolio');
+			throw new Error('Can\'t place order in foreign wikifolio')
 
-		return await new Order({}, this, this.api).submit(order);
+		return await new Order({}, this, this.api).submit(order)
 	}
 
 	/**
 	 * Place a buy order
 	 */
 	public buy(order: Partial<OrderParam>): Promise<Order> {
-		return this.trade({...order, buysell: 'buy'});
+		return this.trade({...order, buysell: 'buy'})
 	}
 
 	/**
 	 * Place a sell order
 	 */
 	public sell(order: Partial<OrderParam>): Promise<Order> {
-		return this.trade({...order, buysell: 'sell'});
+		return this.trade({...order, buysell: 'sell'})
 	}
 }
