@@ -2,54 +2,55 @@ import {Wikifolio, Api} from '.'
 import {removeValues} from '../utils';
 
 const groupType = {
-	0: 'Cash',
-	610: 'Bonds',
-	620: 'Equities',
-	630: 'ETF',
-	640: 'Structured products',
-	650: 'Wikifolio certificates'
+	0: 'cash',
+	610: 'bonds',
+	620: 'equities',
+	630: 'etfs',
+	640: 'structured-products',
+	650: 'wikifolio-certificates'
 };
 
 interface PortfolioItem {
-	name: string;
-	isin: string;
-	quantity: number;
-	averagePurchasePrice: number;
-	ask: number;
-	bid: number;
-	close: number;
-	percentage: number;
-	link: string;
-	issuer: any;
-	mid: number;
-	isLeveraged: boolean;
-	isTicking: boolean;
-	partnerName: string;
+	name: string
+	isin: string
+	quantity: number
+	averagePurchasePrice: number
+	ask: number
+	bid: number
+	close: number
+	percentage: number
+	link: string
+	issuer: any
+	mid: number
+	isLeveraged: boolean
+	isTicking: boolean
+	partnerName: string
 }
 
-type PortfolioGroupName = 'equity' | 'structured' | 'cash' | 'n/a';
+type PortfolioGroupName = 'cash' | 'bonds' | 'equities' | 'etfs' | 'structured-products' | 'wikifolio-certificates'
+
 interface PortfolioGroup {
-	type: number;
+	type: number
 	name: PortfolioGroupName
-	value: number;
-	percentage: number;
-	items: PortfolioItem[];
+	value: number
+	percentage: number
+	items: PortfolioItem[]
 }
 
 export class Portfolio {
-	currency: string;
-	totalValue: number;
-	isSuper: boolean;
-	groups: PortfolioGroup[] = [];
+	currency: string
+	totalValue: number
+	isSuper: boolean
+	groups: PortfolioGroup[] = []
 
 	private static getGroupName(groupId: number): PortfolioGroupName {
-		return groupType[groupId] || 'n/a';
+		return groupType[groupId] || 'n/a'
 	}
 
 	constructor({groups, currency, totalValue, isSuper}: Portfolio, public wikifolio: Wikifolio){
-		this.currency = currency;
-		this.totalValue = totalValue;
-		this.isSuper = isSuper;
+		this.currency = currency
+		this.totalValue = totalValue
+		this.isSuper = isSuper
 		this.groups = groups.map(g => ({
 			...g,
 			name: Portfolio.getGroupName(g.type),
@@ -57,11 +58,11 @@ export class Portfolio {
 				...i,
 				link: i.link.startsWith('http') ? i.link : Api.url + i.link.substr(1)
 			}))
-		}));
+		}))
 	}
 
 	public set(portfolio: Partial<Portfolio>){
-		return Object.assign(this, removeValues(portfolio));
+		return Object.assign(this, removeValues(portfolio))
 	}
 
 	public get items(): PortfolioItem[] {
