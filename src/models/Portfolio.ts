@@ -1,5 +1,5 @@
 import {Wikifolio, Api} from '.'
-import {removeValues} from '../utils';
+import {removeValues} from '../utils'
 
 const groupType = {
 	0: 'cash',
@@ -8,7 +8,7 @@ const groupType = {
 	630: 'etfs',
 	640: 'structured-products',
 	650: 'wikifolio-certificates'
-};
+}
 
 interface PortfolioItem {
 	name: string

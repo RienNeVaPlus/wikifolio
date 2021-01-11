@@ -60,7 +60,7 @@ The examples assume the following setup:
 ```ts
 import Api from 'wikifolio'
 
-const api = new Api({email, password});
+const api = new Api({email, password})
 ```
 
 ![divider](./assets/divider.small.png)
@@ -68,8 +68,8 @@ const api = new Api({email, password});
 #### 1. Fetch details of a wikifolio
 
 ```ts
-const wikifolio = api.wikifolio('wfobserver');
-console.log(await wikifolio.details());
+const wikifolio = api.wikifolio('wfobserver')
+console.log( await wikifolio.details() )
 ```
 
 ![divider](./assets/divider.small.png)
@@ -77,8 +77,8 @@ console.log(await wikifolio.details());
 #### 2. Fetch wikifolio price
 
 ```ts
-const wikifolio = api.wikifolio('wfobserver');
-console.log(await wikifolio.price());
+const wikifolio = api.wikifolio('wfobserver')
+console.log( await wikifolio.price() )
 ```
 
 ![divider](./assets/divider.small.png)
@@ -86,15 +86,15 @@ console.log(await wikifolio.price());
 #### 3. Fetch wikifolio trades
 
 ```ts
-const wikifolio = api.wikifolio('wfobserver');
-console.log(await wikifolio.trades({pageSize: 100, page: 1}));
+const wikifolio = api.wikifolio('wfobserver')
+console.log( await wikifolio.trades({pageSize: 100, page: 1}) )
 ```
 
 #### 4. Fetch wikifolio index history (chart)
 
 ```ts
-const wikifolio = api.wikifolio('wfobserver');
-console.log(await wikifolio.history());
+const wikifolio = api.wikifolio('wfobserver')
+console.log( await wikifolio.history() )
 ```
 
 ![divider](./assets/divider.small.png)
@@ -102,8 +102,8 @@ console.log(await wikifolio.history());
 #### 5. Fetch portfolio items of a wikifolio
 
 ```ts
-const wikifolio = api.wikifolio('wfobserver');
-console.log(await wikifolio.portfolio());
+const wikifolio = api.wikifolio('wfobserver')
+console.log( await wikifolio.portfolio() )
 ```
 
 ![divider](./assets/divider.small.png)
@@ -111,8 +111,8 @@ console.log(await wikifolio.portfolio());
 #### 6. Search wikifolios
 
 ```ts
-const wikifolios = await api.search({query: 'Supervisor'});
-console.log(wikifolios);
+const wikifolios = await api.search({query: 'Supervisor'})
+console.log( wikifolios )
 ```
 
 ![divider](./assets/divider.small.png)
@@ -120,9 +120,9 @@ console.log(wikifolios);
 #### 7. Unwatch all wikifolios on the watchlist
 
 ```ts
-const watchlist = await api.watchlist();
+const watchlist = await api.watchlist()
 for(const wikifolio of watchlist){
-    await wikifolio.watchlist(false);
+    await wikifolio.watchlist(false)
 }
 ```
 
@@ -131,8 +131,8 @@ for(const wikifolio of watchlist){
 #### 8. Get trader info
 
 ```ts
-const user = api.user('riennevaplus');
-console.log(await user.details()); 
+const user = api.user('riennevaplus')
+console.log( await user.details() )
 ```
 
 ![divider](./assets/divider.small.png)
@@ -140,8 +140,8 @@ console.log(await user.details());
 #### 9. Get wikifolios of a trader
 
 ```ts
-const user = api.user('riennevaplus');
-console.log(await user.wikifolios()); 
+const user = api.user('riennevaplus')
+console.log( await user.wikifolios() )
 ```
 
 ![divider](./assets/divider.small.png)
@@ -151,14 +151,14 @@ console.log(await user.wikifolios());
 There's a similar `sell()` method.
 
 ```ts
-const wikifolio = api.wikifolio('wfobserver');
+const wikifolio = api.wikifolio('wfobserver')
 const result = await wikifolio.buy({
     amount: 1,
     limitPrice: 220,
     orderType: "limit",
     underlyingIsin: "DE000LS9NMQ9",
     validUntil: "2020-07-29T00:00:00.000Z"
-});
+})
 ```
 
 ![divider](./assets/divider.small.png)
@@ -166,9 +166,9 @@ const result = await wikifolio.buy({
 #### 11. Update an order
 
 ```ts
-const wikifolio = api.wikifolio('wfobserver');
-const order = wikifolio.order('8b4da005-6750-4b4c-9dff-0364d3e07be0');
-console.log(await order.submit({limitPrice: 100}));
+const wikifolio = api.wikifolio('wfobserver')
+const order = wikifolio.order('8b4da005-6750-4b4c-9dff-0364d3e07be0')
+console.log( await order.submit({limitPrice: 100}) )
 ```
 
 ![divider](./assets/divider.small.png)
@@ -176,11 +176,11 @@ console.log(await order.submit({limitPrice: 100}));
 #### 12. List & remove wikifolio orders
 
 ```ts
-const wikifolio = api.wikifolio('wfobserver');
-const orders = await wikifolio.orders({pageSize: 25, page: 0});
+const wikifolio = api.wikifolio('wfobserver')
+const orders = await wikifolio.orders({pageSize: 25, page: 0})
 
 for(const order of orders){
-    console.log(await order.remove());
+    console.log( await order.remove() )
 }
 ```
 

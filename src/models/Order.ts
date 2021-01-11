@@ -1,5 +1,5 @@
 import {Api, Wikifolio, WikifolioOrdersParam} from '.'
-import {parseHtml, removeValues, toFloat, toInt, toQueryString, toDate} from '../utils';
+import {parseHtml, removeValues, toFloat, toInt, toQueryString, toDate} from '../utils'
 
 type OrderBuySell = 'buy' | 'sell'
 type OrderType = 'limit' | 'stop' | 'quote'
@@ -22,9 +22,9 @@ export interface OrderPlaceParam extends OrderParam {
 }
 
 export class Order {
-	private static instances: {[key: string]: Order} = {};
+	private static instances: {[key: string]: Order} = {}
 	public static instance(api: Api, wikifolio: Wikifolio, id: string): Order {
-		return this.instances[id] = this.instances[id] || new Order({id}, wikifolio, api);
+		return this.instances[id] = this.instances[id] || new Order({id}, wikifolio, api)
 	}
 
 	/**
@@ -38,27 +38,27 @@ export class Order {
 				...param,
 				id: wikifolio.id
 			})}`
-		));
+		))
 
 		return [...$$('tr.parent-order.first-group-item')].map($tr => {
 			const {dataset: {
 				tradeAmount, orderBuysell, orderType, limit, stopLimit, description, validUntil,
 				tpLimit, slLimit, slStop
-			}} = $('.js-edit-trade-button', $tr);
-			const group = $tr.dataset.group;
-			const isin = string('.isin', $tr);
-			const expiresAt = toDate(validUntil);
+			}} = $('.js-edit-trade-button', $tr)
+			const group = $tr.dataset.group
+			const isin = string('.isin', $tr)
+			const expiresAt = toDate(validUntil)
 
-			const order = Order.instance(api, wikifolio, $tr.dataset.id!);
+			const order = Order.instance(api, wikifolio, $tr.dataset.id!)
 
 			const children = $$(`.parent-order:not(.first-group-item)[data-group="${group}"]`).map($tr => {
-				const {dataset} = $('.remove', $tr);
-				const securityType = dataset.securityType as OrderSecurityType;
-				let stopPrice;
-				const prices = $('td.numeric div', $tr).innerHTML.split('/');
+				const {dataset} = $('.remove', $tr)
+				const securityType = dataset.securityType as OrderSecurityType
+				let stopPrice
+				const prices = $('td.numeric div', $tr).innerHTML.split('/')
 
 				if(securityType === 'StopLoss')
-					stopPrice = toFloat(prices[0]);
+					stopPrice = toFloat(prices[0])
 
 				return Order.instance(api, wikifolio, $tr.dataset.id!).set({
 					group,
@@ -70,7 +70,7 @@ export class Order {
 					securityType,
 					expiresAt
 				})
-			});
+			})
 
 			return order.set({
 				group,
@@ -88,45 +88,45 @@ export class Order {
 				expiresAt,
 				children,
 				sources: new Set<string>().add('wikifolio.orders')
-			});
-		});
+			})
+		})
 	}
 
-	children: Order[] = [];
-	sources = new Set<string>();
-	parent?: Order;
+	children: Order[] = []
+	sources = new Set<string>()
+	parent?: Order
 
-	id?: string;
-	group?: string;
-	isin?: string;
-	description?: string;
-	buysell?: OrderBuySell;
-	orderType?: OrderType;
-	securityType?: OrderSecurityType;
-	status?: string;
-	amount?: number;
+	id?: string
+	group?: string
+	isin?: string
+	description?: string
+	buysell?: OrderBuySell
+	orderType?: OrderType
+	securityType?: OrderSecurityType
+	status?: string
+	amount?: number
 
-	limitPrice?: number;								// limit
-	stopPrice?: number;						// stop limit
+	limitPrice?: number 						// limit
+	stopPrice?: number	  					// stop limit
 
 	// TakeProfit
-	takeProfitLimitPrice?: number;	// limit
+	takeProfitLimitPrice?: number   // limit
 
 	// StopLoss
-	stopLossStopPrice?: number;			// stop limit
-	stopLossLimitPrice?: number;		// limit
+	stopLossStopPrice?: number			// stop limit
+	stopLossLimitPrice?: number 		// limit
 
-	createdAt?: Date;
-	// changedAt?: Date;
-	// executedAt?: Date;
-	expiresAt?: Date;
+	createdAt?: Date
+	// changedAt?: Date
+	// executedAt?: Date
+	expiresAt?: Date
 
 	constructor(order: Partial<Order> = {}, public wikifolio: Wikifolio, public api: Api){
-		this.set(order);
+		this.set(order)
 	}
 
 	public set(order: Partial<Order>){
-		return Object.assign(this, removeValues(order));
+		return Object.assign(this, removeValues(order))
 	}
 
 	/**
@@ -142,15 +142,15 @@ export class Order {
 				wikifolioId: this.wikifolio.id,
 				validUntil: order.expiresAt instanceof Date ? order.expiresAt.toISOString() : order.expiresAt
 			})
-		});
+		})
 
-		const {success, orderGuid, reason} = res;
+		const {success, orderGuid, reason} = res
 		if(!success)
-			throw new Error(`Unable to submit order (${reason||'n/a'})`);
+			throw new Error(`Unable to submit order (${reason||'n/a'})`)
 
-		this.id = orderGuid;
+		this.id = orderGuid
 
-		return this;
+		return this
 	}
 
 	/**
@@ -161,6 +161,6 @@ export class Order {
 			url: `${Api.url}dynamic/${this.api.opt.locale.join('/')}/publish/removevirtualorder`,
 			method: 'post',
 			json: {order: this.id}
-		});
+		})
 	}
 }

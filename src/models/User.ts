@@ -1,33 +1,29 @@
 import {Api, Wikifolio} from '.'
-import {parseHtml, removeValues, toFloat} from '../utils';
+import {parseHtml, removeValues, toFloat} from '../utils'
 
 export class User {
-	private static instances: {[key: string]: User} = {};
+	private static instances: {[key: string]: User} = {}
 	public static instance(api: Api, nickname: string): User {
-		return this.instances[nickname] = this.instances[nickname] || new User({nickname}, api);
+		return this.instances[nickname] = this.instances[nickname] || new User({nickname}, api)
 	}
 
-	public static async xxx(){
+	sources = new Set<string>()
+	watchlist: string[] = []
 
-	}
-
-	sources = new Set<string>();
-	watchlist: string[] = [];
-
-	id?: string;
-	nickname?: string;
-	name?: string;
-	seenAt?: Date;
-	registeredAt?: Date;
-	profileUrl?: string;
-	topWikifolio?: Wikifolio;
+	id?: string
+	nickname?: string
+	name?: string
+	seenAt?: Date
+	registeredAt?: Date
+	profileUrl?: string
+	topWikifolio?: Wikifolio
 
 	constructor(user: Partial<User> = {}, public api: Api){
-		this.set(user);
+		this.set(user)
 	}
 
 	public set(user: Partial<User>){
-		return Object.assign(this, removeValues(user));
+		return Object.assign(this, removeValues(user))
 	}
 
 	/**
@@ -35,38 +31,39 @@ export class User {
 	 */
 	private async fetch(...attributes: string[]): Promise<this> {
 		// remove loaded attributes
-		attributes = attributes.filter(a => !this[a]);
+		attributes = attributes.filter(a => !this[a])
 
 		if(attributes.includes('nickname')){
-			throw new Error('Missing user.nickname');
+			throw new Error('Missing user.nickname')
 		}
 
-		return this;
+		return this
 	}
 
 	/**
 	 * Fetches User details from HTML (slow)
 	 */
 	public async details(ignoreCache: boolean = false): Promise<this> {
-		if(this.sources.has('details') && !ignoreCache) return this;
-		await this.fetch('nickname');
+		if(this.sources.has('details') && !ignoreCache) return this
+		await this.fetch('nickname')
 
-		const profileUrl = `${this.api.opt.locale.join('/')}/p/${this.nickname}`;
+		const profileUrl = `${this.api.opt.locale.join('/')}/p/${this.nickname}`
 		const {$, string, date} = parseHtml(
 			await this.api.request(profileUrl)
-		);
+		)
 
-		const {gtmData: {userGtmId: id}} = JSON.parse($('#global-data').innerHTML);
+		const {gtmData: {userGtmId: id}} = JSON.parse($('#global-data').innerHTML)
 
-		const $topWikifolio = $('.c-wikifolio-card__card-url') as HTMLAnchorElement;
-		const topWikifolio = Wikifolio.instance(this.api, $topWikifolio.href.split('/').slice(-1)[0]);
+		const $topWikifolio = $('.c-wikifolio-card__card-url') as HTMLAnchorElement
+		const topWikifolio = Wikifolio.instance(this.api, $topWikifolio.href.split('/').slice(-1)[0])
+
 		topWikifolio.set({
 			title: $topWikifolio.querySelector('.c-icon-name__text')!.innerHTML.trim(),
 			perfever: toFloat($topWikifolio.querySelector('.c-ranking-item__value')!.innerHTML),
 			perf12m: toFloat($topWikifolio.querySelector('.c-ranking-item:nth-child(2) .c-ranking-item__value')!.innerHTML),
 			user: this,
 			sources: topWikifolio.sources.add('user.details')
-		});
+		})
 
 		this.set({
 			id,
@@ -77,29 +74,29 @@ export class User {
 			registeredAt: date('.c-trader-profile__trader-info-item:nth-child(3) .u-fw-sb'),
 			topWikifolio,
 			sources: this.sources.add('details')
-		});
+		})
 
-		return this;
+		return this
 	}
 
 	public async wikifolios(){
-		await this.fetch('nickname');
+		await this.fetch('nickname')
 
 		const {groupedWikifolioCards,wikifoliosWatchlistedByUser} =
-			await this.api.request(`api/profile/${this.nickname}/wikifolios?loadAllWikis=true`);
+			await this.api.request(`api/profile/${this.nickname}/wikifolios?loadAllWikis=true`)
 
-		this.watchlist = wikifoliosWatchlistedByUser;
+		this.watchlist = wikifoliosWatchlistedByUser
 
 		return ([] as Wikifolio[]).concat(
 			...Object.keys(groupedWikifolioCards).map(key =>
 				groupedWikifolioCards[key].wikifolioResults.map(w => {
-					const symbol = w.wikifolioLink.split('/').slice(-1)[0];
+					const symbol = w.wikifolioLink.split('/').slice(-1)[0]
 					return Wikifolio.instance(this.api, {symbol, id: w.id}).set({
 						category: key,
 						sources: new Set<string>().add('user.wikifolios')
-					});
+					})
 				})
 			)
-		);
+		)
 	}
 }
