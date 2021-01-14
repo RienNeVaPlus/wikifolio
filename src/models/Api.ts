@@ -64,7 +64,7 @@ export class Api {
 		const __RequestVerificationToken = (document.querySelector('[name=__RequestVerificationToken]') as HTMLInputElement).value
 		const ufprt = (document.querySelector('[name=ufprt]') as HTMLInputElement).value
 
-		// login with session vars
+    // login with session vars
 		const res = await request.post({
 			url,
 			formData: {
@@ -76,12 +76,12 @@ export class Api {
 			resolveWithFullResponse: true
 		})
 
-		if(!res.request.headers['cookie'])
+		if(!res.body.endsWith('/dashboard') || !res.request.headers['cookie'])
 			throw new Error('Login failed, Cookie not found')
 
-		this.opt.cookie = res.request.headers['cookie']
+    this.opt.cookie = res.request.headers['cookie']
 
-		if(timeout) clearTimeout(timeout)
+    if(timeout) clearTimeout(timeout)
 		timeout = setTimeout(
 			() => this.opt.cookie = undefined,
 			this.opt.timeout * 1000
@@ -101,7 +101,7 @@ export class Api {
 		if(authorize)
 			await this.auth()
 
-		let res = await request(options)
+    let res = await request(options)
 
 		if(!fullResponse && typeof res === 'string' && String(options.url).includes('/api/')){
 			try { res = JSON.parse(res) } catch(e){ throw new Error('Invalid JSON') }
