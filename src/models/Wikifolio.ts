@@ -1,4 +1,14 @@
-import {matchResult, parseHtml, removeValues, toCurrency, toDate, toFloat, toInt, toQueryString} from '../utils'
+import {
+  fromDate,
+  matchResult,
+  parseHtml,
+  removeValues,
+  toCurrency,
+  toDate,
+  toFloat,
+  toInt,
+  toQueryString
+} from '../utils'
 import {Api, Order, OrderParam, OrderPlaceParam, Portfolio, Trade, User} from '.'
 
 export interface WikifolioIdentifier {
@@ -505,6 +515,26 @@ export class Wikifolio {
 
 		return this
 	}
+
+  /**
+   * Wikifolio download
+   */
+	public async download(
+	  type: 'daily' | 'account-statement' = 'daily',
+    from: Date = new Date,
+    to: Date = new Date
+  ): Promise<string> {
+    await this.fetch('symbol')
+
+    return await this.api.request(
+      `dynamic/de/de/invest/download${toQueryString({
+        type,
+        name: this.symbol,
+        datefrom: fromDate(from),
+        dateto: fromDate(to)
+      })}`
+    )
+  }
 
 	/**
 	 * Fetch portfolio
