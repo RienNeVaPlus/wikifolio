@@ -66,6 +66,14 @@ export function toDate(val?: string) {
 	return undefined
 }
 
+export function fromDate(d: Date, type?: string){
+  switch(type) {
+    default:
+      const [date, month] = [d.getDate(), d.getMonth()+1]
+      return (date < 10 ? '0' : '') + date + '.' + (month < 10 ? '0' : '') + month + '.' + d.getFullYear()
+  }
+}
+
 export function toFloat(val?: string){
 	if(val === undefined || emptyValues.includes(val)) return undefined
 	return parseFloat(formatNumber(val))
