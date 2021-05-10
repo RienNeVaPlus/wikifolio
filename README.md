@@ -90,6 +90,8 @@ const wikifolio = api.wikifolio('wfobserver')
 console.log( await wikifolio.trades({pageSize: 100, page: 1}) )
 ```
 
+![divider](./assets/divider.small.png)
+
 #### 4. Fetch wikifolio index history (chart)
 
 ```ts
