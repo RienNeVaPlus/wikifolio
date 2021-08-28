@@ -60,7 +60,7 @@ The examples assume the following setup:
 ```ts
 import Api from 'wikifolio'
 
-const api = new Api({email, password})
+const api = new Api({email: 'example@riennevaplus.de', password: 'examplepassword1337'})
 ```
 
 ![divider](./assets/divider.small.png)
