@@ -646,7 +646,7 @@ export class Wikifolio {
 			data.dates = data.timestamps.map(ts => toDate(ts))
 			data.creationDate = toDate(data.creationDate)
 			data.publishDate = toDate(data.publishDate)
-			data.todaysFirstTick = toDate(data.todaysFirstTick)
+			data.todaysFirstTick = !data.todaysFirstTick ?? toDate(data.todaysFirstTick)
 		}
 
 		return data
