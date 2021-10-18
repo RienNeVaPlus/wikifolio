@@ -159,7 +159,7 @@ const result = await wikifolio.buy({
     limitPrice: 220,
     orderType: "limit",
     underlyingIsin: "DE000LS9NMQ9",
-    validUntil: "2020-07-29T00:00:00.000Z"
+    expiresAt: "2020-07-29T00:00:00.000Z"
 })
 ```
 
