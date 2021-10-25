@@ -1,6 +1,6 @@
 import {Api, Wikifolio, WikifolioOrdersParam} from '.'
 import {parseHtml, removeValues, toFloat, toInt, toQueryString, toDate} from '../utils'
-import { WebSocke } from'ws'
+import { WebSocket } from'ws'
 import { firstValueFrom, Subject } from '../../node_modules/rxjs/'
 
 type OrderBuySell = 'buy' | 'sell'
