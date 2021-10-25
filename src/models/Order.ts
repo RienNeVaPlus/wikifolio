@@ -183,7 +183,7 @@ export class Order {
 		const websocketUrl = `wss://www.wikifolio.com/de/de/signalr/connect?transport=webSockets&clientProtocol=1.5&connectionToken=${encodeURIComponent(connectionToken)}&connectionData=[{"name":"livehub"},{"name":"quotehub"}]&tid=${Math.floor(Math.random() * 11)}`
 		const ws = new WebSocket(websocketUrl, { headers: { 'Cookie': this.api.opt.cookie} })
 		ws.on('open', () => {
-			ws.send(`{"H":"quotehub","M":"GetQuote","A":[ "${this.wikifolio.guid!}","${order.underlyingIsin}","${order.amount}",${order.buysell === 'buy' ? 910 : 920}],"I":4}`)
+			ws.send(`{"H":"quotehub","M":"GetQuote","A":[ "${this.wikifolio.id!}","${order.underlyingIsin}","${order.amount}",${order.buysell === 'buy' ? 910 : 920}],"I":4}`)
 		})
 		ws.on('message', (message) => {
 			let msg = message.toString()
