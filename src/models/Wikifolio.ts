@@ -268,6 +268,7 @@ export class Wikifolio {
 
 	id?: string
 	symbol?: string
+	guid?: string
 
 	wikifolioUrl?: string
 	isin?: string
@@ -371,6 +372,22 @@ export class Wikifolio {
 		}
 
 		return this
+	}
+
+	/**
+	 * Returns the GUID of the portfolio
+	 */
+	private async getPortfolioGuid(symbol: string): Promise<string> {
+		const url = Api.url + `de/de/w/${symbol}`
+		const result = (await this.api.request({
+			url: url,
+			method: 'get',
+		})).toString()
+		
+		let index = result.indexOf(`wikifolioId: "`)
+		let wikifolioId = result.substring(index+14, index+50)
+		
+		return wikifolioId
 	}
 
 	/**
@@ -687,7 +704,7 @@ export class Wikifolio {
 	 */
 	public async trade(order: Partial<OrderPlaceParam>): Promise<Order> {
 		await this.fetch('id', 'isOwned')
-
+		this.guid = order.orderType === 'quote' ? await this.getPortfolioGuid(this.symbol!) : undefined
 		if(!this.isOwned)
 			throw new Error('Can\'t place order in foreign wikifolio')
 
