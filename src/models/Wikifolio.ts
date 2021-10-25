@@ -687,6 +687,7 @@ export class Wikifolio {
 	 */
 	public async trade(order: Partial<OrderPlaceParam>): Promise<Order> {
 		await this.fetch('id', 'isOwned')
+
 		if(!this.isOwned)
 			throw new Error('Can\'t place order in foreign wikifolio')
 
