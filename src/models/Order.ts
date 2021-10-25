@@ -1,5 +1,7 @@
 import {Api, Wikifolio, WikifolioOrdersParam} from '.'
 import {parseHtml, removeValues, toFloat, toInt, toQueryString, toDate} from '../utils'
+import { WebSocke } from'ws'
+import { firstValueFrom, Subject } from '../../node_modules/rxjs/'
 
 type OrderBuySell = 'buy' | 'sell'
 type OrderType = 'limit' | 'stop' | 'quote'
@@ -140,7 +142,8 @@ export class Order {
 				...this,
 				...order,
 				wikifolioId: this.wikifolio.id,
-				validUntil: order.expiresAt instanceof Date ? order.expiresAt.toISOString() : order.expiresAt
+				validUntil: order.expiresAt instanceof Date ? order.expiresAt.toISOString() : order.expiresAt,
+				quoteId: order.orderType === 'quote' ? await this.getQuoteId(order) : undefined
 			})
 		})
 
@@ -162,5 +165,43 @@ export class Order {
 			method: 'post',
 			json: {order: this.id}
 		})
+	}
+
+	/**
+	 * Returns the quoteId required to place an order of type 'quote'
+	 */
+	private async getQuoteId(order: Partial<OrderPlaceParam>) {
+		var subject = new Subject<string>()
+
+		const connectionTokenUrl = `${Api.url}de/de/signalr/negotiate?clientProtocol=1.5&connectionData=[{"name":"livehub"},{"name":"quotehub"}]&_=${new Date().getTime()}`
+		let connectionToken = ''
+		await this.api.request({
+			url: connectionTokenUrl,
+			method: 'get',
+		}).then(data => connectionToken = JSON.parse(data)['ConnectionToken']);
+
+		const websocketUrl = `wss://www.wikifolio.com/de/de/signalr/connect?transport=webSockets&clientProtocol=1.5&connectionToken=${encodeURIComponent(connectionToken)}&connectionData=[{"name":"livehub"},{"name":"quotehub"}]&tid=${Math.floor(Math.random() * 11)}`
+		const ws = new WebSocket(websocketUrl, { headers: { 'Cookie': this.api.opt.cookie} })
+		ws.on('open', () => {
+			ws.send(`{"H":"quotehub","M":"GetQuote","A":[ "${this.wikifolio.guid!}","${order.underlyingIsin}","${order.amount}",${order.buysell === 'buy' ? 910 : 920}],"I":4}`)
+		})
+		ws.on('message', (message) => {
+			let msg = message.toString()
+			let quoteIndex = msg.indexOf('QuoteId')
+			if (quoteIndex !== -1) {
+				let quoteId = msg.substring(quoteIndex+10, quoteIndex+46)
+				subject.next(quoteId)
+				subject.complete()
+				ws.close()
+			}
+		})
+
+		const startUrl = `${Api.url}/de/de/signalr/start?transport=webSockets&clientProtocol=1.5&connectionToken=${encodeURIComponent(connectionToken)}&connectionData=[{"name":"livehub"},{"name":"quotehub"}]&_=${new Date().getTime()}`
+		this.api.request({
+			url: startUrl,
+			method: 'get',
+		});
+
+		return firstValueFrom<string>(subject.asObservable())
 	}
 }
