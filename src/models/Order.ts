@@ -178,7 +178,7 @@ export class Order {
 		await this.api.request({
 			url: connectionTokenUrl,
 			method: 'get',
-		}).then(data => connectionToken = JSON.parse(data)['ConnectionToken']);
+		}).then(data => connectionToken = JSON.parse(data)['ConnectionToken'])
 
 		const websocketUrl = `wss://www.wikifolio.com/de/de/signalr/connect?transport=webSockets&clientProtocol=1.5&connectionToken=${encodeURIComponent(connectionToken)}&connectionData=[{"name":"livehub"},{"name":"quotehub"}]&tid=${Math.floor(Math.random() * 11)}`
 		const ws = new WebSocket(websocketUrl, { headers: { 'Cookie': this.api.opt.cookie} })
@@ -200,7 +200,7 @@ export class Order {
 		this.api.request({
 			url: startUrl,
 			method: 'get',
-		});
+		})
 
 		return firstValueFrom<string>(subject.asObservable())
 	}
