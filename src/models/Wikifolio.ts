@@ -268,7 +268,6 @@ export class Wikifolio {
 
 	id?: string
 	symbol?: string
-	//guid?: string
 
 	wikifolioUrl?: string
 	isin?: string
@@ -688,7 +687,6 @@ export class Wikifolio {
 	 */
 	public async trade(order: Partial<OrderPlaceParam>): Promise<Order> {
 		await this.fetch('id', 'isOwned')
-		// this.guid = order.orderType === 'quote' ? await this.getPortfolioGuid(this.symbol!) : undefined
 		if(!this.isOwned)
 			throw new Error('Can\'t place order in foreign wikifolio')
 
