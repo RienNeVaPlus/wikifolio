@@ -28,7 +28,8 @@ interface Opt extends Options {
 let timeout: NodeJS.Timeout
 
 export class Api {
-	static url = 'https://www.wikifolio.com/'
+  static hostname = 'www.wikifolio.com'
+	static url = `https://${Api.hostname}/`
 
 	opt: Opt
 
@@ -101,7 +102,7 @@ export class Api {
 		if(authorize)
 			await this.auth()
 
-    let res = await request(options)
+    let res: any = await request(options)
 
 		if(!fullResponse && typeof res === 'string' && String(options.url).includes('/api/')){
 			try { res = JSON.parse(res) } catch(e){ throw new Error('Invalid JSON') }
