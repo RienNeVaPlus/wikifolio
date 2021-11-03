@@ -171,7 +171,7 @@ export class Order {
 	 * Returns the quoteId required to place an order of type 'quote'
 	 */
 	private async getQuoteId(order: Partial<OrderPlaceParam>) {
-		var subject = new Subject<string>()
+		const subject = new Subject<string>()
 
 		const connectionTokenUrl = `${Api.url}de/de/signalr/negotiate?clientProtocol=1.5&connectionData=[{"name":"livehub"},{"name":"quotehub"}]&_=${new Date().getTime()}`
 		let connectionToken = ''
@@ -180,7 +180,7 @@ export class Order {
 			method: 'get',
 		}).then(data => connectionToken = JSON.parse(data)['ConnectionToken'])
 
-		const websocketUrl = `wss://www.wikifolio.com/de/de/signalr/connect?transport=webSockets&clientProtocol=1.5&connectionToken=${encodeURIComponent(connectionToken)}&connectionData=[{"name":"livehub"},{"name":"quotehub"}]&tid=${Math.floor(Math.random() * 11)}`
+		const websocketUrl = `wss://${Api.hostname}/de/de/signalr/connect?transport=webSockets&clientProtocol=1.5&connectionToken=${encodeURIComponent(connectionToken)}&connectionData=[{"name":"livehub"},{"name":"quotehub"}]&tid=${Math.floor(Math.random() * 11)}`
 		const ws = new WebSocket(websocketUrl, { headers: { 'Cookie': this.api.opt.cookie} })
 		ws.on('open', () => {
 			ws.send(`{"H":"quotehub","M":"GetQuote","A":[ "${this.wikifolio.id!}","${order.underlyingIsin}","${order.amount}",${order.buysell === 'buy' ? 910 : 920}],"I":1}`)
