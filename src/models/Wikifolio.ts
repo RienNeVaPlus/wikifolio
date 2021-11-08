@@ -383,7 +383,7 @@ export class Wikifolio {
 		const {id, title, traderNickname, performanceEver, performanceToday} =
 			await this.api.request(`api/wikifolio/${this.symbol}/basicdata`)
 
-		this.sources.add('basics')
+    this.sources.add('basics')
 
 		return this.set({
 			id, title,
@@ -414,11 +414,11 @@ export class Wikifolio {
 		const {
 			wikifolioId, userId, userOwnsWikifolio, isSuperWikifolio, isChallengeWikifolio, containsLeverageProducts
 		} = eval(`(${json[1]})`)
-		
+
     // the table is not only missing identifiers but also changes depending on the wikifolio state -.-
 		const table = $('table.c-certificate__key-table')
 		if(!table) return this.set({id: wikifolioId, isClosed:true})
-    
+
 		const tableHTML = table.innerHTML
 		const publishedAt = toDate(matchResult(/Erstemission<\/td>\s[^>]+>\s.+([0-9.]{10})/, tableHTML))
 		const fee = parseInt(matchResult(/Performancegebühr<\/td>\s[^>]+>\s[ ]+([^ ]+)/, tableHTML))
@@ -442,15 +442,15 @@ export class Wikifolio {
 			title: string('.c-wf-head__title-text'),
 			isOwned: userOwnsWikifolio,
 			capital: currency('.c-certificate__item:nth-child(2) .c-certificate__item-value'),
-			createdAt: date('.c-masterdata__item:nth-child(2) .c-masterdata__item-value'),
+			createdAt: date('.c-masterdata__item:nth-child(2) td:nth-child(2) span'),
 
 			publishedAt,
 			fee,
 			liquidation,
 			tradingVolume,
 
-			indexLevel: float('.c-masterdata__item:nth-child(3) .c-masterdata__item-value'),
-			highWatermark: float('.c-masterdata__item:nth-child(4) .c-masterdata__item-value'),
+			indexLevel: float('.c-masterdata__item:nth-child(3) .js-masterdata__index-level'),
+			highWatermark: float('.c-masterdata__item:nth-child(4) td.u-ta-r span'),
 
 			perfever: float('.c-ranking-box--large .c-ranking-item:nth-child(1) .c-ranking-item__value'),
 			perf12m: float('.c-ranking-box--large .c-ranking-item:nth-child(2) .c-ranking-item__value'),
@@ -497,7 +497,7 @@ export class Wikifolio {
 
 		const res = await this.api.request(`api/wikifolio/${this.id}/price`) || {}
 
-		if(!res.ask)
+    if(!res.ask)
 			console.warn('Could not retrieve price for', this.symbol)
 
 		const {
@@ -596,7 +596,7 @@ export class Wikifolio {
 	public async trades(param: Partial<WikifolioTradesParam> = {}){
 		await this.fetch('id')
 
-		const {tradeHistory: {pageCount, isSuperWikifolio, orders}} =	await this.api.request(
+    const {tradeHistory: {pageCount, isSuperWikifolio, orders}} =	await this.api.request(
 			`api/wikifolio/${this.id}/tradehistory${toQueryString({
 				page: 0,
 				pageSize: this.api.opt.defaults.pageSize,
@@ -606,7 +606,7 @@ export class Wikifolio {
 			})}`
 		) as {tradeHistory: {pageCount: number, isSuperWikifolio: boolean, orders: any[]}}
 
-		this.isSuper = isSuperWikifolio
+    this.isSuper = isSuperWikifolio
 		const trades: Trade[] = orders.map(order => new Trade(removeValues(order, null), this))
 
 		return {
