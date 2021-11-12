@@ -1,5 +1,5 @@
 import {JSDOM} from 'jsdom'
-import * as requestPromise from 'request-promise-native'
+import got from 'got'
 
 const emptyValues = ['', '-', 'N/A']
 
@@ -89,10 +89,14 @@ export function toCurrency(val: string){
   return parseFloat(formatNumber(val.startsWith('EUR ') ? val.substr(4) : val))
 }
 
-export function toQueryString(obj?: any, prefix: string | false = '?', encodeKeys: boolean = true){
+export function toQueryString(obj?: any, prefix: string | false = '?', encode: 'keys' | 'values' | 'all' | 'none' = 'none'){
   if(!obj) return ''
   let r = Object.keys(obj)
-    .map(key => obj[key] && (encodeKeys ? encodeURIComponent(key) : key) + '=' + encodeURIComponent(obj[key]))
+    .map(key => obj[key] &&
+        (['all', 'keys'].includes(encode) ? encodeURIComponent(key) : key)
+      + '='
+      + (['all', 'values'].includes(encode) ? encodeURIComponent(obj[key]) : obj[key])
+    )
     .filter(obj => obj)
     .join('&')
   return r && prefix ? prefix + r : r || ''
@@ -109,4 +113,4 @@ export function matchResult(regexp: RegExp, string: string, emptyValue: any = un
   return res[1]
 }
 
-export { JSDOM, requestPromise }
+export { JSDOM, got }

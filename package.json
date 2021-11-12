@@ -18,12 +18,15 @@
   "ntl": {
     "runner": "yarn"
   },
+  "engines": {
+    "node": ">=14.16"
+  },
   "dependencies": {
     "@types/jsdom": "^16.2.3",
-    "@types/request-promise-native": "^1.0.17",
-    "jsdom": "^16.2.2",
-    "request-promise-native": "^1.0.8",
+	  "jsdom": "^16.2.2",
+	  "got": "^11.8.2",
     "rxjs": "^7.4.0",
+    "tough-cookie": "^4.0.0",
     "ws": "^8.2.3"
   },
   "devDependencies": {
