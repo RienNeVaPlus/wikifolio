@@ -66,7 +66,6 @@ const api = new Api({
 })
 ```
 
-<sub>⚠️ **Never store your passwords in plain text.**</sub>  
 <sub>☝️ Use encrypted environment variables or command line [prompts](https://github.com/terkelg/prompts), **never store your passwords in plain text**.</sub>
 
 ![divider](./assets/divider.small.png)
