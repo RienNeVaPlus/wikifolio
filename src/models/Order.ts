@@ -143,7 +143,7 @@ export class Order {
 				...order,
 				wikifolioId: this.wikifolio.id,
 				validUntil: order.expiresAt instanceof Date ? order.expiresAt.toISOString() : order.expiresAt,
-				quoteId: order.orderType === 'quote' ? await this.getQuoteId(order) : undefined
+				quoteId: order.orderType === 'quote' ? await this.quoteId(order) : undefined
 			})
 		})
 
@@ -170,38 +170,52 @@ export class Order {
 	/**
 	 * Returns the quoteId required to place an order of type 'quote'
 	 */
-	private async getQuoteId(order: Partial<OrderPlaceParam>) {
+	async quoteId(order: Partial<OrderPlaceParam>) {
 		const subject = new Subject<string>()
+    const base: any = {
+      connectionData: `[{"name":"livehub"},{"name":"quotehub"}]`
+    }
 
-		const connectionTokenUrl = `${Api.url}de/de/signalr/negotiate?clientProtocol=1.5&connectionData=[{"name":"livehub"},{"name":"quotehub"}]&_=${new Date().getTime()}`
-		let connectionToken = ''
-		await this.api.request({
-			url: connectionTokenUrl,
-			method: 'get',
-		}).then(data => connectionToken = JSON.parse(data)['ConnectionToken'])
+    const {ConnectionToken} = JSON.parse(
+      await this.api.request(`${this.api.opt.locale.join('/')}/signalr/negotiate`+toQueryString(base))
+    )
 
-		const websocketUrl = `wss://${Api.hostname}/de/de/signalr/connect?transport=webSockets&clientProtocol=1.5&connectionToken=${encodeURIComponent(connectionToken)}&connectionData=[{"name":"livehub"},{"name":"quotehub"}]&tid=${Math.floor(Math.random() * 11)}`
-		const ws = new WebSocket(websocketUrl, { headers: { 'Cookie': this.api.opt.cookie} })
-		ws.on('open', () => {
-			ws.send(`{"H":"quotehub","M":"GetQuote","A":[ "${this.wikifolio.id!}","${order.underlyingIsin}","${order.amount}",${order.buysell === 'buy' ? 910 : 920}],"I":1}`)
+    base.connectionToken = encodeURIComponent(ConnectionToken)
+    base.transport = 'webSockets'
+
+    const ws = new WebSocket(`wss://${Api.hostname}/de/de/signalr/connect`+toQueryString(base), {
+      headers: { Cookie: this.api.opt.cookie }
+    })
+
+    ws.on('error', err => console.error(err))
+    ws.on('open', () => ws.send(JSON.stringify({
+        H: 'quotehub',
+        M: 'GetQuote',
+        A: [this.wikifolio.id, order.underlyingIsin, order.amount, order.buysell === 'buy' ? 910 : 920],
+        I: 1
+      }))
+    )
+		ws.on('message', message => {
+      const res = JSON.parse(message.toString())
+      if(!res.M || !res.M.length) return
+      const {M: messages} = res
+
+      for(const message of messages){
+        const {H, M, A} = message
+        if(H !== 'QuoteHub') continue
+
+        switch(M) {
+          default: console.warn('Unknown response from WebSocket:', H, M, A); break
+          case 'quoteCallback': subject.next(A[0].QuoteId); break
+          case 'quoteErrorCallback': throw new Error(A[0])
+        }
+        subject.complete()
+        ws.close()
+      }
 		})
-		ws.on('message', (message) => {
-			let msg = message.toString()
-			let quoteIndex = msg.indexOf('QuoteId')
-			if (quoteIndex !== -1) {
-				let quoteId = msg.substring(quoteIndex+10, quoteIndex+46)
-				subject.next(quoteId)
-				subject.complete()
-				ws.close()
-			}
-		})
 
-		const startUrl = `${Api.url}/de/de/signalr/start?transport=webSockets&clientProtocol=1.5&connectionToken=${encodeURIComponent(connectionToken)}&connectionData=[{"name":"livehub"},{"name":"quotehub"}]&_=${new Date().getTime()}`
-		this.api.request({
-			url: startUrl,
-			method: 'get',
-		})
+    this.api.request(`de/de/signalr/start${toQueryString(base)}`).then()
 
-		return firstValueFrom<string>(subject.asObservable())
+    return firstValueFrom<string>(subject.asObservable())
 	}
 }
