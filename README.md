@@ -60,8 +60,14 @@ The examples assume the following setup:
 ```ts
 import Api from 'wikifolio'
 
-const api = new Api({email: 'example@riennevaplus.de', password: 'examplepassword1337'})
+const api = new Api({
+  email: 'email@example.org',
+  password: 'plaintext-password'
+})
 ```
+
+<sub>⚠️ **Never store your passwords in plain text.**</sub>  
+<sub>☝️ Use encrypted environment variables or command line [prompts](https://github.com/terkelg/prompts), **never store your passwords in plain text**.</sub>
 
 ![divider](./assets/divider.small.png)
 
@@ -148,13 +154,13 @@ console.log( await user.wikifolios() )
 
 ![divider](./assets/divider.small.png)
 
-#### 10. Place a buy order
+#### 10. Place a limit order
 
 There's a similar `sell()` method.
 
 ```ts
 const wikifolio = api.wikifolio('wfobserver')
-const result = await wikifolio.buy({
+const order = await wikifolio.buy({
     amount: 1,
     limitPrice: 220,
     orderType: "limit",
@@ -162,6 +168,7 @@ const result = await wikifolio.buy({
     expiresAt: "2020-07-29T00:00:00.000Z"
 })
 ```
+Note: When `orderType` is set to `quote` the first returned quote will be accepted.
 
 ![divider](./assets/divider.small.png)
 
