@@ -1,6 +1,6 @@
 {
   "name": "wikifolio",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Wikifolio (unofficial) API",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -22,7 +22,6 @@
     "node": ">=14.16"
   },
   "dependencies": {
-    "@types/jsdom": "^16.2.3",
 	  "jsdom": "^16.2.2",
 	  "got": "^11.8.2",
     "rxjs": "^7.4.0",
@@ -30,6 +29,7 @@
     "ws": "^8.2.3"
   },
   "devDependencies": {
+	  "@types/jsdom": "^16.2.3",
     "typescript": "^3.9.5"
   }
 }
