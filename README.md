@@ -22,6 +22,12 @@ This is an <strong>unofficial</strong> Node.js API client for <a href="https://w
      </sub>
 </p>
 
+<p align="center">
+    <sub>
+        <a href="https://github.com/RienNeVaPlus/wikifolio/issues/15">⚠️ On the 7th of april 2021, Wikifolio announced a re-launch of their website, which is likely to (temporarily) break this API. ⚠️</a>
+     </sub>
+</p>
+
 ![divider](./assets/divider.png)
 
 ### ⭐ Features
