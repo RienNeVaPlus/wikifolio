@@ -78,10 +78,10 @@ export class Api {
       cookieJar
     })
 
-    if((!res.body.endsWith('/dashboard') && !res.body.endsWith('/uebersicht')) || !res.request.headers['cookie'])
+    if((!res.body.endsWith('/dashboard') && !res.body.endsWith('/uebersicht')) || !res.request.headers['set-cookie'])
       throw new Error('Login failed, Cookie not found')
 
-    this.opt.cookie = res.headers['set-cookie'][0]
+    this.opt.cookie = res.headers['set-cookie']![0]
 
     if(timeout) clearTimeout(timeout)
     timeout = setTimeout(
