@@ -76,7 +76,7 @@ export class Api {
 			resolveWithFullResponse: true
 		})
 
-		if(!res.body.endsWith('/dashboard') || !res.request.headers['cookie'])
+		if((!res.body.endsWith('/dashboard') && !res.body.endsWith('/uebersicht')) || !res.request.headers['cookie'])
 			throw new Error('Login failed, Cookie not found')
 
     this.opt.cookie = res.request.headers['cookie']
