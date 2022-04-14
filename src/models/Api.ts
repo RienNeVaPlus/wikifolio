@@ -78,7 +78,7 @@ export class Api {
       cookieJar
     })
 
-    if(!res.body.endsWith('/dashboard') || !res.headers['set-cookie'])
+    if((!res.body.endsWith('/dashboard') && !res.body.endsWith('/uebersicht')) || !res.request.headers['cookie'])
       throw new Error('Login failed, Cookie not found')
 
     this.opt.cookie = res.headers['set-cookie'][0]
