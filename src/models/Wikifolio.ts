@@ -1,6 +1,6 @@
 import {
   fromDate,
-  matchResult,
+  // matchResult,
   parseHtml,
   removeValues,
   toCurrency,
@@ -100,8 +100,7 @@ interface WikifolioComment {
 }
 
 const regex = {
-  script: /<script type="text\/json">(.*)<\/script>/g,
-  wikifolioData: /window\.wikifolio\.data = ({[^}]+})/
+  script: /<script id="__NEXT_DATA__" type="application\/json">(.*|\n)<\/script>/g,
 }
 
 export class Wikifolio {
@@ -397,47 +396,61 @@ export class Wikifolio {
    * Fetches Wikifolio details from HTML (slow)
    */
   public async details(ignoreCache: boolean = false): Promise<this> {
+
     if(this.sources.has('details') && !ignoreCache) return this
     await this.fetch('symbol')
 
     const wikifolioUrl = `${this.api.opt.locale.join('/')}/w/${this.symbol}`
-    const {html, $, $$, attribute, string, float, date, currency} = parseHtml(
+    const {html, $, $$, string, float, date, currency} = parseHtml(
       await this.api.request(wikifolioUrl)
     )
 
-    // on page js
-    const json = regex.wikifolioData.exec(html)
-    if(!json || !json[1]){
+    let rawRegexJson = regex.script.exec(html);
+    if(!rawRegexJson || !rawRegexJson[1]){
       throw new Error('Wikifolio JSON not found. This is probably a bug, please report it.')
     }
 
-    const {
-      wikifolioId, userId, userOwnsWikifolio, isSuperWikifolio, isChallengeWikifolio, containsLeverageProducts
-    } = eval(`(${json[1]})`)
+    let json = JSON.parse(rawRegexJson[1])
+    if (!json || !json['props'] || !json['props']['pageProps']) {
+      throw new Error('Wikifolio JSON not found. This is probably a bug, please report it.')
+    }
+
+    json = json['props']['pageProps']
+    const data = json['data']
+
+    const wikifolioId = data['wikifolio']['id']
+    const userId = json['user']['id']
+    const userOwnsWikifolio = data['userOwnsWikifolio']
+    const containsLeverageProducts = data['wikifolio']['containsLeverageProducts']
+    const nickName = data['trader']['nickName']
 
     // the table is not only missing identifiers but also changes depending on the wikifolio state -.-
-    const table = $('table.c-certificate__key-table')
-    if(!table) return this.set({id: wikifolioId, isClosed:true})
+    // const table = $('table.c-certificate__key-table')
+    // if(!table) return this.set({id: wikifolioId, isClosed:true})
 
-    const tableHTML = table.innerHTML
-    const publishedAt = toDate(matchResult(/Erstemission<\/td>\s[^>]+>\s.+([0-9.]{10})/, tableHTML))
-    const fee = parseInt(matchResult(/Performancegebühr<\/td>\s[^>]+>\s[ ]+([^ ]+)/, tableHTML))
-    const liquidation = toFloat(matchResult(/Liquidationskennzahl<\/td>\s[^>]+>\s[ ]+([^ ]+)/, tableHTML))
-    const tradingVolume = toCurrency(matchResult(/Handelsvolumen<\/td>\s.+\s.+\s[ ]+([^ ]+)/, tableHTML))
+    // const tableHTML = table.innerHTML
+    // const publishedAt = toDate(matchResult(/Erstemission<\/td>\s[^>]+>\s.+([0-9.]{10})/, tableHTML))
+    // const fee = parseInt(matchResult(/Performancegebühr<\/td>\s[^>]+>\s[ ]+([^ ]+)/, tableHTML))
+    // const liquidation = toFloat(matchResult(/Liquidationskennzahl<\/td>\s[^>]+>\s[ ]+([^ ]+)/, tableHTML))
+    // const tradingVolume = toCurrency(matchResult(/Handelsvolumen<\/td>\s.+\s.+\s[ ]+([^ ]+)/, tableHTML))
 
-    const nickname = string('.c-trader__name:nth-child(2)')
-    const user = User.instance(this.api, nickname)
+    const publishedAt = undefined;
+    const fee = 0;
+    const liquidation = undefined;
+    const tradingVolume = undefined;
+
+    const user = User.instance(this.api, nickName)
     user.set({
       id: userId,
-      name: string('.c-trader__name:nth-child(2)'),
-      profileUrl: Api.url + attribute('.gtm-profile-link', 'href').substr(1)
+      name: nickName,
+      profileUrl: `${Api.url}de/de/p/${nickName}`
     })
 
     this.set({
-      user,
+      user: user,
       id: wikifolioId,
       isClosed: false,
-      wikifolioUrl: Api.url + wikifolioUrl.substr(1),
+      wikifolioUrl: `${Api.url}de/de/w/${this.symbol}`,
       isin: string('.gtm-copy-isin'),
       title: string('.c-wf-head__title-text'),
       isOwned: userOwnsWikifolio,
@@ -458,8 +471,8 @@ export class Wikifolio {
       maxdraw: float('.c-ranking-box--small .c-ranking-item__value'),
       risk: float('.c-risk-factor'),
 
-      isSuper: isSuperWikifolio,
-      isChallenge: isChallengeWikifolio,
+      isSuper: undefined,
+      isChallenge: undefined,
       isWatchlisted: !!$('.js-remove-from-watchlist'),
       containsLeverageProducts,
       investable: !!$('.c-status-icon-wrapper[title*="Investierbar"]'),
