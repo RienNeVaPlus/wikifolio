@@ -168,11 +168,11 @@ export class Wikifolio {
         createdAt: toDate(rankingValues.find(i => i.label === 'Erstellungsdatum').displayValue),
         publishedAt: toDate(rankingValues.find(i => i.label === 'Erstemission').displayValue),
         fee: toInt(rankingValues.find(i => i.label === 'Performancegebühr').displayValue),
-        maxdraw: toFloat(rankingValues.find(i => i.label === 'Maximaler Verlust (bisher)').displayValue),
-        perfever: toFloat(rankingValues.find(i => i.label === 'Performance seit Beginn').displayValue),
-        perfannually: toFloat(rankingValues.find(i => i.label === 'Ø-Performance pro Jahr').displayValue),
+        maxLoss: toFloat(rankingValues.find(i => i.label === 'Maximaler Verlust (bisher)').displayValue),
+        performanceEver: toFloat(rankingValues.find(i => i.label === 'Performance seit Beginn').displayValue),
+        performanceAnnualized: toFloat(rankingValues.find(i => i.label === 'Ø-Performance pro Jahr').displayValue),
         title,
-        isWatchlisted,
+        isOnWatchlist: isWatchlisted,
         chartImgUrl,
         wikifolioUrl: Api.url + wikifolioUrl.substr(1),
         status: status
@@ -225,24 +225,24 @@ export class Wikifolio {
         rank: toFloat(rankings.find(i => i.identifier === 'topwikis').displayValue),
         buyint: toFloat(rankings.find(i => i.identifier === 'buyint').displayValue),
         bought30d: toFloat(rankings.find(i => i.identifier === 'bought30d').displayValue),
-        perfever: toFloat(rankings.find(i => i.identifier === 'perfever').displayValue),
-        perfemission: toFloat(rankings.find(i => i.identifier === 'perfemission').displayValue),
+        performanceEver: toFloat(rankings.find(i => i.identifier === 'perfever').displayValue),
+        performanceSinceEmission: toFloat(rankings.find(i => i.identifier === 'perfemission').displayValue),
         perfytd: toFloat(rankings.find(i => i.identifier === 'perfytd').displayValue),
         capital: toCurrency(rankings.find(i => i.identifier === 'aum').displayValue),
         tradevol30d: toCurrency(rankings.find(i => i.identifier === 'tradevol30d').displayValue),
         perfbuy: toFloat(rankings.find(i => i.identifier === 'perfbuy').displayValue),
-        perfannually: toFloat(rankings.find(i => i.identifier === 'perfannually').displayValue),
+        performanceAnnualized: toFloat(rankings.find(i => i.identifier === 'perfannually').displayValue),
         perf60m: toFloat(rankings.find(i => i.identifier === 'perf60m').displayValue),
         perf36m: toFloat(rankings.find(i => i.identifier === 'perf36m').displayValue),
-        perf12m: toFloat(rankings.find(i => i.identifier === 'perf12m').displayValue),
+        performanceOneYear: toFloat(rankings.find(i => i.identifier === 'perf12m').displayValue),
         perf52week: toFloat(rankings.find(i => i.identifier === 'perf52week').displayValue),
         perf6m: toFloat(rankings.find(i => i.identifier === 'perf6m').displayValue),
         perf3m: toFloat(rankings.find(i => i.identifier === 'perf3m').displayValue),
         perf1m: toFloat(rankings.find(i => i.identifier === 'perf1m').displayValue),
-        maxdraw: toFloat(rankings.find(i => i.identifier === 'maxdraw').displayValue),
-        sharperatio: toFloat(rankings.find(i => i.identifier === 'sharperatio').displayValue),
+        maxLoss: toFloat(rankings.find(i => i.identifier === 'maxdraw').displayValue),
+        sharpRatio: toFloat(rankings.find(i => i.identifier === 'sharperatio').displayValue),
         esgScore: toFloat(rankings.find(i => i.identifier === 'esgScore').displayValue),
-        risk: toFloat(rankings.find(i => i.identifier === 'risk').displayValue),
+        riskFactor: toFloat(rankings.find(i => i.identifier === 'risk').displayValue),
         chartImgUrl,
         wikifolioUrl: Api.url + wikifolioUrl.substr(1),
         status: status
@@ -285,6 +285,7 @@ export class Wikifolio {
   fee?: number
   liquidation?: number
   tradingVolume?: number
+  chartImageUrl?: string
 
   decisionMaking?: string[]
 
@@ -292,7 +293,7 @@ export class Wikifolio {
   investable?: boolean
   containsLeverageProducts?: boolean
   realMoney?: boolean
-  isWatchlisted?: boolean
+  isOnWatchlist?: boolean
   name?: string
   isOwned?: boolean
 
@@ -300,21 +301,21 @@ export class Wikifolio {
   isSuper?: boolean // isSuperWikifolio
   isChallenge?: boolean // isChallengeWikifolio
   isClosed?: boolean
-  sharperatio?: number
+  sharpRatio?: number
 
-  perf12m?: number
-  perf6m?: number
-  perf3m?: number
-  perf1m?: number
+  performanceOneYear?: number | null
+  perf6m?: number | null
+  perf3m?: number | null
+  perf1m?: number | null
 
-  perfever?: number
-  perfemission?: number
-  perfannually?: number
-  perfytd?: number
+  performanceEver?: number | null
+  performanceSinceEmission?: number | null
+  performanceAnnualized?: number | null
+  perfytd?: number | null
   esgScore?: number
-  maxdraw?: number
+  maxLoss?: number
   aum?: number
-  risk?: number
+  riskFactor?: number | null
 
   perftoday?: number
   perfintra?: number
@@ -387,7 +388,7 @@ export class Wikifolio {
     return this.set({
       id, title,
       user: User.instance(this.api, traderNickname),
-      perfever: toFloat(performanceEver.displayValue),
+      performanceEver: toFloat(performanceEver.displayValue),
       perftoday: toFloat(performanceToday.displayValue)
     })
   }
@@ -401,7 +402,7 @@ export class Wikifolio {
     await this.fetch('symbol')
 
     const wikifolioUrl = `${this.api.opt.locale.join('/')}/w/${this.symbol}`
-    const {html, $, $$, string, float, currency} = parseHtml(
+    const {html, $, $$, float, currency} = parseHtml(
       await this.api.request(wikifolioUrl)
     )
 
@@ -430,6 +431,26 @@ export class Wikifolio {
     const publishedAt = new Date(data['wikifolio']['emissionDate'])
     const highWatermark = data['masterData']['highWatermark']['value']
     const status = data['wikifolio']['status']
+    const performanceFee = data['wikifolio']['performanceFee']
+    const liquidation = float('#__next > main > div.css-1ub35bf > div > div.css-18f7bd0 > section > div.css-1ofqig9 > div > div > div.chakra-stack.css-1ap2nmd > div:nth-child(5) > strong')
+    const tradingVolume = currency('#__next > main > div.css-1ub35bf > div > div.css-18f7bd0 > section > div.css-1ofqig9 > div > div > div.chakra-stack.css-1ap2nmd > div:nth-child(6) > strong')
+    const tradeIdea = data['wikifolio']['shortDescription']
+    const isInvestable = data['wikifolio']['isInvestable']
+
+    const decisionMaking = data['decisionMakings']
+    const chartImageUrl = data['wikifolio']['chartImageUrl']
+
+    // Add null check because of arithmetic operation
+    const performanceSinceEmission = data['keyFigures']['performanceSinceEmission']['ranking']['value'] * 100
+    const performanceOneYear = data['keyFigures']['performanceOneYear']['ranking']['value'] * 100
+    const performanceEver = data['keyFigures']['performanceEver']['ranking']['value'] * 100
+    const performanceAnnualized = data['keyFigures']['performanceAnnualized']['ranking']['value'] * 100
+    
+    const maxLoss = data['keyFigures']['maxLoss']['ranking']['value'] * 100
+    const riskFactor = data['keyFigures']['riskFactor']['ranking']['value'] * 100
+    const isOnWatchlist = data['wikifolio']['isOnWatchlist']
+
+    // const tags = Wikifolio.parseTags(data['tagsData'])
 
     // the table is not only missing identifiers but also changes depending on the wikifolio state -.-
     // const table = $('table.c-certificate__key-table')
@@ -441,9 +462,7 @@ export class Wikifolio {
     // const liquidation = toFloat(matchResult(/Liquidationskennzahl<\/td>\s[^>]+>\s[ ]+([^ ]+)/, tableHTML))
     // const tradingVolume = toCurrency(matchResult(/Handelsvolumen<\/td>\s.+\s.+\s[ ]+([^ ]+)/, tableHTML))
 
-    const fee = 0;
-    const liquidation = undefined;
-    const tradingVolume = undefined;
+    
 
     const user = User.instance(this.api, nickName)
     user.set({
@@ -466,28 +485,30 @@ export class Wikifolio {
       createdAt: createdAt,
 
       publishedAt: publishedAt,
-      fee,
-      liquidation,
-      tradingVolume,
+      fee: performanceFee,
+      liquidation: liquidation,
+      tradingVolume: tradingVolume,
+      chartImageUrl: chartImageUrl,
 
       indexLevel: float('.c-masterdata__item:nth-child(3) .js-masterdata__index-level'),
       highWatermark: highWatermark,
 
-      perfever: float('.c-ranking-box--large .c-ranking-item:nth-child(1) .c-ranking-item__value'),
-      perf12m: float('.c-ranking-box--large .c-ranking-item:nth-child(2) .c-ranking-item__value'),
-      perfannually: float('.c-ranking-box--large .c-ranking-item:nth-child(3) .c-ranking-item__value'),
-      maxdraw: float('.c-ranking-box--small .c-ranking-item__value'),
-      risk: float('.c-risk-factor'),
+      performanceSinceEmission: performanceSinceEmission,
+      performanceEver: performanceEver,
+      performanceOneYear: performanceOneYear,
+      performanceAnnualized: performanceAnnualized,
+      maxLoss: maxLoss,
+      riskFactor: riskFactor,
 
       isSuper: undefined,
       isChallenge: undefined,
-      isWatchlisted: !!$('.js-remove-from-watchlist'),
-      containsLeverageProducts,
-      investable: !!$('.c-status-icon-wrapper[title*="Investierbar"]'),
+      isOnWatchlist: isOnWatchlist,
+      containsLeverageProducts: containsLeverageProducts,
+      investable: isInvestable,
       realMoney: !!$('.c-status-icon-wrapper[title*="Real Money"]'),
 
-      tradeidea: string('.js-tradeidea__content'),
-      decisionMaking: $$('.c-wfdecision__item').map(e => e.textContent!),
+      tradeidea: tradeIdea,
+      decisionMaking: decisionMaking,
 
       comments: $$('.c-wfcomment article').map(e => {
         const body = e.querySelector('div')!
@@ -592,14 +613,14 @@ export class Wikifolio {
 
     this.set({
       rank: toFloat(l.find(i => i.label === 'Top-wikifolio-Rangliste').value),
-      maxdraw: toFloat(l.find(i => i.label === 'Maximaler Verlust (bisher)').value),
+      maxLoss: toFloat(l.find(i => i.label === 'Maximaler Verlust (bisher)').value),
       perf52weekHigh: toFloat(l.find(i => i.label == '52-Wochen-Hoch').value),
-      sharperatio: toFloat(l.find(i => i.label === 'Sharpe Ratio').value),
-      perfever: toFloat(l.find(i => i.label === 'Performance seit Beginn').value),
-      perfemission: toFloat(l.find(i => i.label === 'Performance seit Emission').value),
+      sharpRatio: toFloat(l.find(i => i.label === 'Sharpe Ratio').value),
+      performanceEver: toFloat(l.find(i => i.label === 'Performance seit Beginn').value),
+      performanceSinceEmission: toFloat(l.find(i => i.label === 'Performance seit Emission').value),
       perfytd: toFloat(l.find(i => i.label === 'Performance seit Jahresbeginn').value),
-      perfannually: toFloat(l.find(i => i.label === 'Ø-Performance pro Jahr').value),
-      perf12m: toFloat(l.find(i => i.label === 'Performance 1 Jahr').value),
+      performanceAnnualized: toFloat(l.find(i => i.label === 'Ø-Performance pro Jahr').value),
+      performanceOneYear: toFloat(l.find(i => i.label === 'Performance 1 Jahr').value),
       perf6m: toFloat(l.find(i => i.label === 'Performance 6 Monate').value),
       perf3m: toFloat(l.find(i => i.label === 'Performance 3 Monate').value),
       perf1m: toFloat(l.find(i => i.label === 'Performance 1 Monat').value),

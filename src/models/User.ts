@@ -59,8 +59,8 @@ export class User {
 
     topWikifolio.set({
       title: $topWikifolio.querySelector('.c-icon-name__text')!.innerHTML.trim(),
-      perfever: toFloat($topWikifolio.querySelector('.c-ranking-item__value')!.innerHTML),
-      perf12m: toFloat($topWikifolio.querySelector('.c-ranking-item:nth-child(2) .c-ranking-item__value')!.innerHTML),
+      performanceEver: toFloat($topWikifolio.querySelector('.c-ranking-item__value')!.innerHTML),
+      performanceOneYear: toFloat($topWikifolio.querySelector('.c-ranking-item:nth-child(2) .c-ranking-item__value')!.innerHTML),
       user: this,
       sources: topWikifolio.sources.add('user.details')
     })
