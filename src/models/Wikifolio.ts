@@ -269,8 +269,8 @@ export class Wikifolio {
   symbol?: string
 
   wikifolioUrl?: string
-  isin?: string
-  wkn?: string
+  isin?: string | null
+  wkn?: string | null
   createdAt?: Date
   publishedAt?: Date
 
@@ -401,7 +401,7 @@ export class Wikifolio {
     await this.fetch('symbol')
 
     const wikifolioUrl = `${this.api.opt.locale.join('/')}/w/${this.symbol}`
-    const {html, $, $$, string, float, date, currency} = parseHtml(
+    const {html, $, $$, string, float, currency} = parseHtml(
       await this.api.request(wikifolioUrl)
     )
 
@@ -423,6 +423,13 @@ export class Wikifolio {
     const userOwnsWikifolio = data['userOwnsWikifolio']
     const containsLeverageProducts = data['wikifolio']['containsLeverageProducts']
     const nickName = data['trader']['nickName']
+    const isin = data['wikifolio']['isin']
+    const wkn = data['wikifolio']['wkn']
+    const title = json['head']['title']
+    const createdAt = new Date(data['masterData']['creationDate']['value'])
+    const publishedAt = new Date(data['wikifolio']['emissionDate'])
+    const highWatermark = data['masterData']['highWatermark']['value']
+    const status = data['wikifolio']['status']
 
     // the table is not only missing identifiers but also changes depending on the wikifolio state -.-
     // const table = $('table.c-certificate__key-table')
@@ -434,7 +441,6 @@ export class Wikifolio {
     // const liquidation = toFloat(matchResult(/Liquidationskennzahl<\/td>\s[^>]+>\s[ ]+([^ ]+)/, tableHTML))
     // const tradingVolume = toCurrency(matchResult(/Handelsvolumen<\/td>\s.+\s.+\s[ ]+([^ ]+)/, tableHTML))
 
-    const publishedAt = undefined;
     const fee = 0;
     const liquidation = undefined;
     const tradingVolume = undefined;
@@ -451,19 +457,21 @@ export class Wikifolio {
       id: wikifolioId,
       isClosed: false,
       wikifolioUrl: `${Api.url}de/de/w/${this.symbol}`,
-      isin: string('.gtm-copy-isin'),
-      title: string('.c-wf-head__title-text'),
+      isin: isin,
+      wkn: wkn,
+      title: title,
       isOwned: userOwnsWikifolio,
-      capital: currency('.c-certificate__item:nth-child(2) .c-certificate__item-value'),
-      createdAt: date('.c-masterdata__item:nth-child(2) td:nth-child(2) span'),
+      status: status,
+      capital: currency('#__next > main > div.css-1ub35bf > div > div.css-18f7bd0 > section > div.css-8atqhb > strong'),
+      createdAt: createdAt,
 
-      publishedAt,
+      publishedAt: publishedAt,
       fee,
       liquidation,
       tradingVolume,
 
       indexLevel: float('.c-masterdata__item:nth-child(3) .js-masterdata__index-level'),
-      highWatermark: float('.c-masterdata__item:nth-child(4) td.u-ta-r span'),
+      highWatermark: highWatermark,
 
       perfever: float('.c-ranking-box--large .c-ranking-item:nth-child(1) .c-ranking-item__value'),
       perf12m: float('.c-ranking-box--large .c-ranking-item:nth-child(2) .c-ranking-item__value'),
