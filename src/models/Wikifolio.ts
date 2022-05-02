@@ -292,7 +292,6 @@ export class Wikifolio {
   chartImgUrl?: string
   investable?: boolean
   containsLeverageProducts?: boolean
-  realMoney?: boolean
   isOnWatchlist?: boolean
   name?: string
   isOwned?: boolean
@@ -440,14 +439,27 @@ export class Wikifolio {
     const decisionMaking = data['decisionMakings']
     const chartImageUrl = data['wikifolio']['chartImageUrl']
 
-    // Add null check because of arithmetic operation
-    const performanceSinceEmission = data['keyFigures']['performanceSinceEmission']['ranking']['value'] * 100
-    const performanceOneYear = data['keyFigures']['performanceOneYear']['ranking']['value'] * 100
-    const performanceEver = data['keyFigures']['performanceEver']['ranking']['value'] * 100
-    const performanceAnnualized = data['keyFigures']['performanceAnnualized']['ranking']['value'] * 100
+    let performanceSinceEmission = data['keyFigures']['performanceSinceEmission']['ranking']['value']
+    performanceSinceEmission = performanceSinceEmission === null ? null : performanceSinceEmission * 100
+
+
+    let performanceOneYear = data['keyFigures']['performanceOneYear']['ranking']['value']
+    performanceOneYear = performanceOneYear === null ? performanceOneYear : performanceOneYear * 100
+
+    let performanceEver = data['keyFigures']['performanceEver']['ranking']['value']
+    performanceEver = performanceEver === null ? null : performanceEver * 100
+
+    let performanceAnnualized = data['keyFigures']['performanceAnnualized']['ranking']['value']
+    performanceAnnualized = performanceAnnualized === null ? null : performanceAnnualized * 100
     
-    const maxLoss = data['keyFigures']['maxLoss']['ranking']['value'] * 100
-    const riskFactor = data['keyFigures']['riskFactor']['ranking']['value'] * 100
+    const capital = currency('#__next > main > div.css-1ub35bf > div > div.css-18f7bd0 > section > div.css-8atqhb > strong')
+
+    let maxLoss = data['keyFigures']['maxLoss']['ranking']['value']
+    maxLoss = maxLoss === null ? null : maxLoss * 100
+
+    let riskFactor = data['keyFigures']['riskFactor']['ranking']['value']
+    riskFactor = riskFactor === null ? null : riskFactor * 100
+
     const isOnWatchlist = data['wikifolio']['isOnWatchlist']
 
     // const tags = Wikifolio.parseTags(data['tagsData'])
@@ -462,8 +474,6 @@ export class Wikifolio {
     // const liquidation = toFloat(matchResult(/Liquidationskennzahl<\/td>\s[^>]+>\s[ ]+([^ ]+)/, tableHTML))
     // const tradingVolume = toCurrency(matchResult(/Handelsvolumen<\/td>\s.+\s.+\s[ ]+([^ ]+)/, tableHTML))
 
-    
-
     const user = User.instance(this.api, nickName)
     user.set({
       id: userId,
@@ -475,13 +485,13 @@ export class Wikifolio {
       user: user,
       id: wikifolioId,
       isClosed: false,
-      wikifolioUrl: `${Api.url}de/de/w/${this.symbol}`,
+      wikifolioUrl: `${Api.url}de/de/w/${this.symbol}`, // see json
       isin: isin,
       wkn: wkn,
       title: title,
       isOwned: userOwnsWikifolio,
       status: status,
-      capital: currency('#__next > main > div.css-1ub35bf > div > div.css-18f7bd0 > section > div.css-8atqhb > strong'),
+      capital: capital,
       createdAt: createdAt,
 
       publishedAt: publishedAt,
@@ -490,7 +500,6 @@ export class Wikifolio {
       tradingVolume: tradingVolume,
       chartImageUrl: chartImageUrl,
 
-      indexLevel: float('.c-masterdata__item:nth-child(3) .js-masterdata__index-level'),
       highWatermark: highWatermark,
 
       performanceSinceEmission: performanceSinceEmission,
@@ -500,12 +509,10 @@ export class Wikifolio {
       maxLoss: maxLoss,
       riskFactor: riskFactor,
 
-      isSuper: undefined,
-      isChallenge: undefined,
+      // isChallenge: undefined,
       isOnWatchlist: isOnWatchlist,
       containsLeverageProducts: containsLeverageProducts,
       investable: isInvestable,
-      realMoney: !!$('.c-status-icon-wrapper[title*="Real Money"]'),
 
       tradeidea: tradeIdea,
       decisionMaking: decisionMaking,
@@ -550,7 +557,8 @@ export class Wikifolio {
     this.set({
       ask, bid, quantityLimitBid, quantityLimitAsk, midPrice, showMidPrice, currency, isCurrencyConverted, isTicking,
       priceCalculatedAt: new Date(calculationDate),
-      priceValidUntil: new Date(validUntilDate)
+      priceValidUntil: new Date(validUntilDate),
+      indexLevel: Math.floor(midPrice * 10) / 10
     })
 
     this.sources.add('price')
