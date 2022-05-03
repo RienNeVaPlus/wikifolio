@@ -405,16 +405,11 @@ export class Wikifolio {
     )
 
     let rawRegexJson = regex.script.exec(html);
-    if(!rawRegexJson || !rawRegexJson[1]){
+    if(!rawRegexJson || !rawRegexJson[1] || !JSON.parse(rawRegexJson[1])?.props?.pageProps){
       throw new Error('Wikifolio JSON not found. This is probably a bug, please report it.')
     }
 
-    let json = JSON.parse(rawRegexJson[1])
-    if (!json || !json['props'] || !json['props']['pageProps']) {
-      throw new Error('Wikifolio JSON not found. This is probably a bug, please report it.')
-    }
-
-    json = json['props']['pageProps']
+    const json = JSON.parse(rawRegexJson[1])['props']['pageProps']
     const data = json['data']
     const wikifolio = data['wikifolio']
     const keyfigures = data['keyFigures']
