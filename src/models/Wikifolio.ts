@@ -1,7 +1,7 @@
 import {
   fromDate,
-  matchResult,
   parseHtml,
+  removeHtml,
   removeValues,
   toCurrency,
   toDate,
@@ -93,15 +93,13 @@ export interface WikifolioSearch {
 }
 
 interface WikifolioComment {
-  ref?: string
   html: string
   text: string
   createdAt: Date
 }
 
 const regex = {
-  script: /<script type="text\/json">(.*)<\/script>/g,
-  wikifolioData: /window\.wikifolio\.data = ({[^}]+})/
+  script: /<script id="__NEXT_DATA__" type="application\/json">(.*|\n)<\/script>/g,
 }
 
 export class Wikifolio {
@@ -169,11 +167,11 @@ export class Wikifolio {
         createdAt: toDate(rankingValues.find(i => i.label === 'Erstellungsdatum').displayValue),
         publishedAt: toDate(rankingValues.find(i => i.label === 'Erstemission').displayValue),
         fee: toInt(rankingValues.find(i => i.label === 'Performancegebühr').displayValue),
-        maxdraw: toFloat(rankingValues.find(i => i.label === 'Maximaler Verlust (bisher)').displayValue),
-        perfever: toFloat(rankingValues.find(i => i.label === 'Performance seit Beginn').displayValue),
-        perfannually: toFloat(rankingValues.find(i => i.label === 'Ø-Performance pro Jahr').displayValue),
+        maxLoss: toFloat(rankingValues.find(i => i.label === 'Maximaler Verlust (bisher)').displayValue),
+        performanceEver: toFloat(rankingValues.find(i => i.label === 'Performance seit Beginn').displayValue),
+        performanceAnnualized: toFloat(rankingValues.find(i => i.label === 'Ø-Performance pro Jahr').displayValue),
         title,
-        isWatchlisted,
+        isOnWatchlist: isWatchlisted,
         chartImgUrl,
         wikifolioUrl: Api.url + wikifolioUrl.substr(1),
         status: status
@@ -226,24 +224,24 @@ export class Wikifolio {
         rank: toFloat(rankings.find(i => i.identifier === 'topwikis').displayValue),
         buyint: toFloat(rankings.find(i => i.identifier === 'buyint').displayValue),
         bought30d: toFloat(rankings.find(i => i.identifier === 'bought30d').displayValue),
-        perfever: toFloat(rankings.find(i => i.identifier === 'perfever').displayValue),
-        perfemission: toFloat(rankings.find(i => i.identifier === 'perfemission').displayValue),
+        performanceEver: toFloat(rankings.find(i => i.identifier === 'perfever').displayValue),
+        performanceSinceEmission: toFloat(rankings.find(i => i.identifier === 'perfemission').displayValue),
         perfytd: toFloat(rankings.find(i => i.identifier === 'perfytd').displayValue),
         capital: toCurrency(rankings.find(i => i.identifier === 'aum').displayValue),
         tradevol30d: toCurrency(rankings.find(i => i.identifier === 'tradevol30d').displayValue),
         perfbuy: toFloat(rankings.find(i => i.identifier === 'perfbuy').displayValue),
-        perfannually: toFloat(rankings.find(i => i.identifier === 'perfannually').displayValue),
+        performanceAnnualized: toFloat(rankings.find(i => i.identifier === 'perfannually').displayValue),
         perf60m: toFloat(rankings.find(i => i.identifier === 'perf60m').displayValue),
         perf36m: toFloat(rankings.find(i => i.identifier === 'perf36m').displayValue),
-        perf12m: toFloat(rankings.find(i => i.identifier === 'perf12m').displayValue),
+        performanceOneYear: toFloat(rankings.find(i => i.identifier === 'perf12m').displayValue),
         perf52week: toFloat(rankings.find(i => i.identifier === 'perf52week').displayValue),
         perf6m: toFloat(rankings.find(i => i.identifier === 'perf6m').displayValue),
         perf3m: toFloat(rankings.find(i => i.identifier === 'perf3m').displayValue),
         perf1m: toFloat(rankings.find(i => i.identifier === 'perf1m').displayValue),
-        maxdraw: toFloat(rankings.find(i => i.identifier === 'maxdraw').displayValue),
-        sharperatio: toFloat(rankings.find(i => i.identifier === 'sharperatio').displayValue),
+        maxLoss: toFloat(rankings.find(i => i.identifier === 'maxdraw').displayValue),
+        sharpRatio: toFloat(rankings.find(i => i.identifier === 'sharperatio').displayValue),
         esgScore: toFloat(rankings.find(i => i.identifier === 'esgScore').displayValue),
-        risk: toFloat(rankings.find(i => i.identifier === 'risk').displayValue),
+        riskFactor: toFloat(rankings.find(i => i.identifier === 'risk').displayValue),
         chartImgUrl,
         wikifolioUrl: Api.url + wikifolioUrl.substr(1),
         status: status
@@ -270,8 +268,8 @@ export class Wikifolio {
   symbol?: string
 
   wikifolioUrl?: string
-  isin?: string
-  wkn?: string
+  isin?: string | null
+  wkn?: string | null
   createdAt?: Date
   publishedAt?: Date
 
@@ -286,14 +284,14 @@ export class Wikifolio {
   fee?: number
   liquidation?: number
   tradingVolume?: number
+  chartImageUrl?: string
 
   decisionMaking?: string[]
 
   chartImgUrl?: string
   investable?: boolean
   containsLeverageProducts?: boolean
-  realMoney?: boolean
-  isWatchlisted?: boolean
+  isOnWatchlist?: boolean
   name?: string
   isOwned?: boolean
 
@@ -301,21 +299,21 @@ export class Wikifolio {
   isSuper?: boolean // isSuperWikifolio
   isChallenge?: boolean // isChallengeWikifolio
   isClosed?: boolean
-  sharperatio?: number
+  sharpRatio?: number
 
-  perf12m?: number
-  perf6m?: number
-  perf3m?: number
-  perf1m?: number
+  performanceOneYear?: number | null
+  perf6m?: number | null
+  perf3m?: number | null
+  perf1m?: number | null
 
-  perfever?: number
-  perfemission?: number
-  perfannually?: number
-  perfytd?: number
+  performanceEver?: number | null
+  performanceSinceEmission?: number | null
+  performanceAnnualized?: number | null
+  perfytd?: number | null
   esgScore?: number
-  maxdraw?: number
+  maxLoss?: number
   aum?: number
-  risk?: number
+  riskFactor?: number | null
 
   perftoday?: number
   perfintra?: number
@@ -388,7 +386,7 @@ export class Wikifolio {
     return this.set({
       id, title,
       user: User.instance(this.api, traderNickname),
-      perfever: toFloat(performanceEver.displayValue),
+      performanceEver: toFloat(performanceEver.displayValue),
       perftoday: toFloat(performanceToday.displayValue)
     })
   }
@@ -397,90 +395,124 @@ export class Wikifolio {
    * Fetches Wikifolio details from HTML (slow)
    */
   public async details(ignoreCache: boolean = false): Promise<this> {
+
     if(this.sources.has('details') && !ignoreCache) return this
     await this.fetch('symbol')
 
     const wikifolioUrl = `${this.api.opt.locale.join('/')}/w/${this.symbol}`
-    const {html, $, $$, attribute, string, float, date, currency} = parseHtml(
+    const {html, float, currency} = parseHtml(
       await this.api.request(wikifolioUrl)
     )
 
-    // on page js
-    const json = regex.wikifolioData.exec(html)
-    if(!json || !json[1]){
+    let rawRegexJson = regex.script.exec(html);
+    if(!rawRegexJson || !rawRegexJson[1] || !JSON.parse(rawRegexJson[1])?.props?.pageProps){
       throw new Error('Wikifolio JSON not found. This is probably a bug, please report it.')
     }
 
-    const {
-      wikifolioId, userId, userOwnsWikifolio, isSuperWikifolio, isChallengeWikifolio, containsLeverageProducts
-    } = eval(`(${json[1]})`)
+    const json = JSON.parse(rawRegexJson[1])['props']['pageProps']
+    const data = json['data']
+    const wikifolio = data['wikifolio']
+    const keyfigures = data['keyFigures']
 
-    // the table is not only missing identifiers but also changes depending on the wikifolio state -.-
-    const table = $('table.c-certificate__key-table')
-    if(!table) return this.set({id: wikifolioId, isClosed:true})
+    const wikifolioId = wikifolio['id']
+    const status = wikifolio['status']
+    const performanceFee = wikifolio['performanceFee']
+    const publishedAt = new Date(wikifolio['emissionDate'])
+    const isin = wikifolio['isin']
+    const wkn = wikifolio['wkn']
+    const containsLeverageProducts = wikifolio['containsLeverageProducts']
+    const tradeIdea = wikifolio['shortDescription']
+    const isInvestable = wikifolio['isInvestable']
+    const chartImageUrl = wikifolio['chartImageUrl']
+    const isOnWatchlist = wikifolio['isOnWatchlist']
 
-    const tableHTML = table.innerHTML
-    const publishedAt = toDate(matchResult(/Erstemission<\/td>\s[^>]+>\s.+([0-9.]{10})/, tableHTML))
-    const fee = parseInt(matchResult(/Performancegebühr<\/td>\s[^>]+>\s[ ]+([^ ]+)/, tableHTML))
-    const liquidation = toFloat(matchResult(/Liquidationskennzahl<\/td>\s[^>]+>\s[ ]+([^ ]+)/, tableHTML))
-    const tradingVolume = toCurrency(matchResult(/Handelsvolumen<\/td>\s.+\s.+\s[ ]+([^ ]+)/, tableHTML))
+    const userId = json['user']['id']
+    const title = json['head']['title']
+    const userOwnsWikifolio = data['userOwnsWikifolio']
+    const decisionMaking = data['decisionMakings']
+    const nickName = data['trader']['nickName']
+    const createdAt = new Date(data['masterData']['creationDate']['value'])
+    const highWatermark = data['masterData']['highWatermark']['value']
+    const isClosed = json['dict']['certificate']['closingMessage'] !== undefined
 
-    const nickname = string('.c-trader__name:nth-child(2)')
-    const user = User.instance(this.api, nickname)
+    const liquidation = float('#__next > main > div.css-1ub35bf > div > div.css-18f7bd0 > section > div.css-1ofqig9 > div > div > div.chakra-stack.css-1ap2nmd > div:nth-child(5) > strong')
+    const tradingVolume = currency('#__next > main > div.css-1ub35bf > div > div.css-18f7bd0 > section > div.css-1ofqig9 > div > div > div.chakra-stack.css-1ap2nmd > div:nth-child(6) > strong')
+    const capital = currency('#__next > main > div.css-1ub35bf > div > div.css-18f7bd0 > section > div.css-8atqhb > strong')
+
+    let performanceSinceEmission = keyfigures['performanceSinceEmission']['ranking']['value']
+    performanceSinceEmission = performanceSinceEmission === null ? null : performanceSinceEmission * 100
+
+    let performanceOneYear = keyfigures['performanceOneYear']['ranking']['value']
+    performanceOneYear = performanceOneYear === null ? performanceOneYear : performanceOneYear * 100
+
+    let performanceEver = keyfigures['performanceEver']['ranking']['value']
+    performanceEver = performanceEver === null ? null : performanceEver * 100
+
+    let performanceAnnualized = keyfigures['performanceAnnualized']['ranking']['value']
+    performanceAnnualized = performanceAnnualized === null ? null : performanceAnnualized * 100
+    
+    let maxLoss = keyfigures['maxLoss']['ranking']['value']
+    maxLoss = maxLoss === null ? null : maxLoss * 100
+
+    let riskFactor = keyfigures['riskFactor']['ranking']['value']
+    riskFactor = riskFactor === null ? null : riskFactor * 100
+
+    let feedItems: any[] = (await this.api.request(`api/feed/wikifolio/${wikifolioId}?page=1`))['data']['feedItems']
+    const comments: WikifolioComment[] = []
+    feedItems.forEach(feedItem => {
+      if (feedItem?.comment?.text) {
+        comments.push({
+          html: feedItem.comment.text,
+          text: removeHtml(feedItem.comment.text),
+          createdAt: new Date(feedItem.creationDate)
+        })
+      }
+    })
+
+    const user = User.instance(this.api, nickName)
     user.set({
       id: userId,
-      name: string('.c-trader__name:nth-child(2)'),
-      profileUrl: Api.url + attribute('.gtm-profile-link', 'href').substr(1)
+      name: nickName,
+      profileUrl: `${Api.url}de/de/p/${nickName}`
     })
 
     this.set({
-      user,
+      user: user,
       id: wikifolioId,
-      isClosed: false,
-      wikifolioUrl: Api.url + wikifolioUrl.substr(1),
-      isin: string('.gtm-copy-isin'),
-      title: string('.c-wf-head__title-text'),
+      isClosed: isClosed,
+      wikifolioUrl: `${Api.url}de/de/w/${this.symbol}`,
+      isin: isin,
+      wkn: wkn,
+      title: title,
       isOwned: userOwnsWikifolio,
-      capital: currency('.c-certificate__item:nth-child(2) .c-certificate__item-value'),
-      createdAt: date('.c-masterdata__item:nth-child(2) td:nth-child(2) span'),
+      status: status,
+      capital: capital,
+      createdAt: createdAt,
 
-      publishedAt,
-      fee,
-      liquidation,
-      tradingVolume,
+      publishedAt: publishedAt,
+      fee: performanceFee,
+      liquidation: liquidation,
+      tradingVolume: tradingVolume,
+      chartImageUrl: chartImageUrl,
 
-      indexLevel: float('.c-masterdata__item:nth-child(3) .js-masterdata__index-level'),
-      highWatermark: float('.c-masterdata__item:nth-child(4) td.u-ta-r span'),
+      highWatermark: highWatermark,
 
-      perfever: float('.c-ranking-box--large .c-ranking-item:nth-child(1) .c-ranking-item__value'),
-      perf12m: float('.c-ranking-box--large .c-ranking-item:nth-child(2) .c-ranking-item__value'),
-      perfannually: float('.c-ranking-box--large .c-ranking-item:nth-child(3) .c-ranking-item__value'),
-      maxdraw: float('.c-ranking-box--small .c-ranking-item__value'),
-      risk: float('.c-risk-factor'),
+      performanceSinceEmission: performanceSinceEmission,
+      performanceEver: performanceEver,
+      performanceOneYear: performanceOneYear,
+      performanceAnnualized: performanceAnnualized,
+      maxLoss: maxLoss,
+      riskFactor: riskFactor,
 
-      isSuper: isSuperWikifolio,
-      isChallenge: isChallengeWikifolio,
-      isWatchlisted: !!$('.js-remove-from-watchlist'),
-      containsLeverageProducts,
-      investable: !!$('.c-status-icon-wrapper[title*="Investierbar"]'),
-      realMoney: !!$('.c-status-icon-wrapper[title*="Real Money"]'),
+      // isChallenge: undefined,
+      isOnWatchlist: isOnWatchlist,
+      containsLeverageProducts: containsLeverageProducts,
+      investable: isInvestable,
 
-      tradeidea: string('.js-tradeidea__content'),
-      decisionMaking: $$('.c-wfdecision__item').map(e => e.textContent!),
+      tradeidea: tradeIdea,
+      decisionMaking: decisionMaking,
 
-      comments: $$('.c-wfcomment article').map(e => {
-        const body = e.querySelector('div')!
-        const d = String(e.querySelector('.c-wfcomment__item-date')!.textContent)
-          .trim().split(/[. :]/g).map(n => parseInt(n))
-        const ref = e.querySelector('.c-wfcomment__item-subheader-content')
-
-        return removeValues({
-          ref: ref ? String(ref.textContent).trim() : undefined,
-          html: body.innerHTML.trim(),
-          text: body.textContent!.trim(),
-          createdAt: new Date(d[2], d[1]-1, d[0], d[4]+2, d[5])
-        })
-      })
+      comments: comments,
     })
 
     this.sources.add('details')
@@ -508,7 +540,8 @@ export class Wikifolio {
     this.set({
       ask, bid, quantityLimitBid, quantityLimitAsk, midPrice, showMidPrice, currency, isCurrencyConverted, isTicking,
       priceCalculatedAt: new Date(calculationDate),
-      priceValidUntil: new Date(validUntilDate)
+      priceValidUntil: new Date(validUntilDate),
+      indexLevel: Math.floor(midPrice * 10) / 10
     })
 
     this.sources.add('price')
@@ -571,14 +604,14 @@ export class Wikifolio {
 
     this.set({
       rank: toFloat(l.find(i => i.label === 'Top-wikifolio-Rangliste').value),
-      maxdraw: toFloat(l.find(i => i.label === 'Maximaler Verlust (bisher)').value),
+      maxLoss: toFloat(l.find(i => i.label === 'Maximaler Verlust (bisher)').value),
       perf52weekHigh: toFloat(l.find(i => i.label == '52-Wochen-Hoch').value),
-      sharperatio: toFloat(l.find(i => i.label === 'Sharpe Ratio').value),
-      perfever: toFloat(l.find(i => i.label === 'Performance seit Beginn').value),
-      perfemission: toFloat(l.find(i => i.label === 'Performance seit Emission').value),
+      sharpRatio: toFloat(l.find(i => i.label === 'Sharpe Ratio').value),
+      performanceEver: toFloat(l.find(i => i.label === 'Performance seit Beginn').value),
+      performanceSinceEmission: toFloat(l.find(i => i.label === 'Performance seit Emission').value),
       perfytd: toFloat(l.find(i => i.label === 'Performance seit Jahresbeginn').value),
-      perfannually: toFloat(l.find(i => i.label === 'Ø-Performance pro Jahr').value),
-      perf12m: toFloat(l.find(i => i.label === 'Performance 1 Jahr').value),
+      performanceAnnualized: toFloat(l.find(i => i.label === 'Ø-Performance pro Jahr').value),
+      performanceOneYear: toFloat(l.find(i => i.label === 'Performance 1 Jahr').value),
       perf6m: toFloat(l.find(i => i.label === 'Performance 6 Monate').value),
       perf3m: toFloat(l.find(i => i.label === 'Performance 3 Monate').value),
       perf1m: toFloat(l.find(i => i.label === 'Performance 1 Monat').value),
@@ -654,17 +687,18 @@ export class Wikifolio {
 
   /**
    * Toggle watchlist status of wikifolio
+   * TODO: debug/fix return error
+   * Returns error: 'Das wikifolio konnte nicht zu deiner Watchlist hinzugefügt werden, bitte versuche es etwas später noch einmal.'
    */
   public async watchlist(add: boolean = true): Promise<boolean> {
     await this.fetch('id')
 
-    const {success} = await this.api.request({
-      url: `${Api.url}dynamic/en/int/watchlistwikifolio/${add?'addwikifoliotowatchlist':'removewikifoliofromwatchlist'}`,
-      method: 'post',
-      json: {wikifolioId: this.id}
+    const {isSuccess} = await this.api.request({
+      url: `${Api.url}api/watchlist/${this.id}/${add ? 'wikifolio' : 'remove'}`,
+      method: add ? 'post' : 'delete'
     })
 
-    return success
+    return isSuccess
   }
 
   /**
