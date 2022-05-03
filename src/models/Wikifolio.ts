@@ -687,17 +687,18 @@ export class Wikifolio {
 
   /**
    * Toggle watchlist status of wikifolio
+   * TODO: debug/fix return error
+   * Returns error: 'Das wikifolio konnte nicht zu deiner Watchlist hinzugefügt werden, bitte versuche es etwas später noch einmal.'
    */
   public async watchlist(add: boolean = true): Promise<boolean> {
     await this.fetch('id')
 
-    const {success} = await this.api.request({
-      url: `${Api.url}dynamic/en/int/watchlistwikifolio/${add?'addwikifoliotowatchlist':'removewikifoliofromwatchlist'}`,
-      method: 'post',
-      json: {wikifolioId: this.id}
+    const {isSuccess} = await this.api.request({
+      url: `${Api.url}api/watchlist/${this.id}/${add ? 'wikifolio' : 'remove'}`,
+      method: add ? 'post' : 'delete'
     })
 
-    return success
+    return isSuccess
   }
 
   /**
