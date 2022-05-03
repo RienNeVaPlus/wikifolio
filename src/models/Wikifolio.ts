@@ -1,7 +1,7 @@
 import {
   fromDate,
-  // matchResult,
   parseHtml,
+  removeHtml,
   removeValues,
   toCurrency,
   toDate,
@@ -93,7 +93,6 @@ export interface WikifolioSearch {
 }
 
 interface WikifolioComment {
-  ref?: string
   html: string
   text: string
   createdAt: Date
@@ -401,7 +400,7 @@ export class Wikifolio {
     await this.fetch('symbol')
 
     const wikifolioUrl = `${this.api.opt.locale.join('/')}/w/${this.symbol}`
-    const {html, $, $$, float, currency} = parseHtml(
+    const {html, float, currency} = parseHtml(
       await this.api.request(wikifolioUrl)
     )
 
@@ -417,62 +416,63 @@ export class Wikifolio {
 
     json = json['props']['pageProps']
     const data = json['data']
+    const wikifolio = data['wikifolio']
+    const keyfigures = data['keyFigures']
 
-    const wikifolioId = data['wikifolio']['id']
+    const wikifolioId = wikifolio['id']
+    const status = wikifolio['status']
+    const performanceFee = wikifolio['performanceFee']
+    const publishedAt = new Date(wikifolio['emissionDate'])
+    const isin = wikifolio['isin']
+    const wkn = wikifolio['wkn']
+    const containsLeverageProducts = wikifolio['containsLeverageProducts']
+    const tradeIdea = wikifolio['shortDescription']
+    const isInvestable = wikifolio['isInvestable']
+    const chartImageUrl = wikifolio['chartImageUrl']
+    const isOnWatchlist = wikifolio['isOnWatchlist']
+
     const userId = json['user']['id']
-    const userOwnsWikifolio = data['userOwnsWikifolio']
-    const containsLeverageProducts = data['wikifolio']['containsLeverageProducts']
-    const nickName = data['trader']['nickName']
-    const isin = data['wikifolio']['isin']
-    const wkn = data['wikifolio']['wkn']
     const title = json['head']['title']
+    const userOwnsWikifolio = data['userOwnsWikifolio']
+    const decisionMaking = data['decisionMakings']
+    const nickName = data['trader']['nickName']
     const createdAt = new Date(data['masterData']['creationDate']['value'])
-    const publishedAt = new Date(data['wikifolio']['emissionDate'])
     const highWatermark = data['masterData']['highWatermark']['value']
-    const status = data['wikifolio']['status']
-    const performanceFee = data['wikifolio']['performanceFee']
+    const isClosed = json['dict']['certificate']['closingMessage'] !== undefined
+
     const liquidation = float('#__next > main > div.css-1ub35bf > div > div.css-18f7bd0 > section > div.css-1ofqig9 > div > div > div.chakra-stack.css-1ap2nmd > div:nth-child(5) > strong')
     const tradingVolume = currency('#__next > main > div.css-1ub35bf > div > div.css-18f7bd0 > section > div.css-1ofqig9 > div > div > div.chakra-stack.css-1ap2nmd > div:nth-child(6) > strong')
-    const tradeIdea = data['wikifolio']['shortDescription']
-    const isInvestable = data['wikifolio']['isInvestable']
-
-    const decisionMaking = data['decisionMakings']
-    const chartImageUrl = data['wikifolio']['chartImageUrl']
-
-    let performanceSinceEmission = data['keyFigures']['performanceSinceEmission']['ranking']['value']
-    performanceSinceEmission = performanceSinceEmission === null ? null : performanceSinceEmission * 100
-
-
-    let performanceOneYear = data['keyFigures']['performanceOneYear']['ranking']['value']
-    performanceOneYear = performanceOneYear === null ? performanceOneYear : performanceOneYear * 100
-
-    let performanceEver = data['keyFigures']['performanceEver']['ranking']['value']
-    performanceEver = performanceEver === null ? null : performanceEver * 100
-
-    let performanceAnnualized = data['keyFigures']['performanceAnnualized']['ranking']['value']
-    performanceAnnualized = performanceAnnualized === null ? null : performanceAnnualized * 100
-    
     const capital = currency('#__next > main > div.css-1ub35bf > div > div.css-18f7bd0 > section > div.css-8atqhb > strong')
 
-    let maxLoss = data['keyFigures']['maxLoss']['ranking']['value']
+    let performanceSinceEmission = keyfigures['performanceSinceEmission']['ranking']['value']
+    performanceSinceEmission = performanceSinceEmission === null ? null : performanceSinceEmission * 100
+
+    let performanceOneYear = keyfigures['performanceOneYear']['ranking']['value']
+    performanceOneYear = performanceOneYear === null ? performanceOneYear : performanceOneYear * 100
+
+    let performanceEver = keyfigures['performanceEver']['ranking']['value']
+    performanceEver = performanceEver === null ? null : performanceEver * 100
+
+    let performanceAnnualized = keyfigures['performanceAnnualized']['ranking']['value']
+    performanceAnnualized = performanceAnnualized === null ? null : performanceAnnualized * 100
+    
+    let maxLoss = keyfigures['maxLoss']['ranking']['value']
     maxLoss = maxLoss === null ? null : maxLoss * 100
 
-    let riskFactor = data['keyFigures']['riskFactor']['ranking']['value']
+    let riskFactor = keyfigures['riskFactor']['ranking']['value']
     riskFactor = riskFactor === null ? null : riskFactor * 100
 
-    const isOnWatchlist = data['wikifolio']['isOnWatchlist']
-
-    // const tags = Wikifolio.parseTags(data['tagsData'])
-
-    // the table is not only missing identifiers but also changes depending on the wikifolio state -.-
-    // const table = $('table.c-certificate__key-table')
-    // if(!table) return this.set({id: wikifolioId, isClosed:true})
-
-    // const tableHTML = table.innerHTML
-    // const publishedAt = toDate(matchResult(/Erstemission<\/td>\s[^>]+>\s.+([0-9.]{10})/, tableHTML))
-    // const fee = parseInt(matchResult(/Performancegebühr<\/td>\s[^>]+>\s[ ]+([^ ]+)/, tableHTML))
-    // const liquidation = toFloat(matchResult(/Liquidationskennzahl<\/td>\s[^>]+>\s[ ]+([^ ]+)/, tableHTML))
-    // const tradingVolume = toCurrency(matchResult(/Handelsvolumen<\/td>\s.+\s.+\s[ ]+([^ ]+)/, tableHTML))
+    let feedItems: any[] = (await this.api.request(`api/feed/wikifolio/${wikifolioId}?page=1`))['data']['feedItems']
+    const comments: WikifolioComment[] = []
+    feedItems.forEach(feedItem => {
+      if (feedItem?.comment?.text) {
+        comments.push({
+          html: feedItem.comment.text,
+          text: removeHtml(feedItem.comment.text),
+          createdAt: new Date(feedItem.creationDate)
+        })
+      }
+    })
 
     const user = User.instance(this.api, nickName)
     user.set({
@@ -484,8 +484,8 @@ export class Wikifolio {
     this.set({
       user: user,
       id: wikifolioId,
-      isClosed: false,
-      wikifolioUrl: `${Api.url}de/de/w/${this.symbol}`, // see json
+      isClosed: isClosed,
+      wikifolioUrl: `${Api.url}de/de/w/${this.symbol}`,
       isin: isin,
       wkn: wkn,
       title: title,
@@ -517,19 +517,7 @@ export class Wikifolio {
       tradeidea: tradeIdea,
       decisionMaking: decisionMaking,
 
-      comments: $$('.c-wfcomment article').map(e => {
-        const body = e.querySelector('div')!
-        const d = String(e.querySelector('.c-wfcomment__item-date')!.textContent)
-          .trim().split(/[. :]/g).map(n => parseInt(n))
-        const ref = e.querySelector('.c-wfcomment__item-subheader-content')
-
-        return removeValues({
-          ref: ref ? String(ref.textContent).trim() : undefined,
-          html: body.innerHTML.trim(),
-          text: body.textContent!.trim(),
-          createdAt: new Date(d[2], d[1]-1, d[0], d[4]+2, d[5])
-        })
-      })
+      comments: comments,
     })
 
     this.sources.add('details')

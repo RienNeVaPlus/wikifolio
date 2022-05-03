@@ -113,4 +113,8 @@ export function matchResult(regexp: RegExp, string: string, emptyValue: any = un
   return res[1]
 }
 
+export function removeHtml(htmlString: string) {
+  return htmlString.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ')
+}
+
 export { JSDOM, got }
